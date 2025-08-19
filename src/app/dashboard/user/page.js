@@ -6,7 +6,7 @@ import TaskList from '../../../components/Task/TaskList';
 import DashboardLayout from '../../../components/DashboardLayout';
 import { getUsers } from '../../../features/auth/authService';
 import AuthGuard from '@/components/AuthGuard';
-import { Typography, Box, Card, CardContent, Grid, Button, Alert } from '@mui/material';
+import { Typography, Box, Card, CardContent, Grid, Button, Alert, Tabs, Tab } from '@mui/material';
 import { Download } from '@mui/icons-material';
 import { exportTasksToCSV } from "../../../components/exportUtils"
 
@@ -17,26 +17,50 @@ const UserDashboard = () => {
   const [users, setUsers] = useState([]);
   const [analytics, setAnalytics] = useState({});
   const [fetchError, setFetchError] = useState('');
+  const [currentTab, setCurrentTab] = useState(0);
+
+  // Filter tasks based on current tab
+  const getFilteredTasks = () => {
+    if (!tasks) return [];
+    
+    switch (currentTab) {
+      case 0: // All Tasks (for admin) or My Tasks (for user)
+        if (user?.role === 'admin') {
+          return tasks;
+        } else {
+          return tasks.filter(task => task.ownerId === user?.uid);
+        }
+      case 1: // Assigned to Me
+        return tasks.filter(task => task.assignedTo === user?.uid);
+      case 2: // Created by Me (only for non-admin users)
+        return tasks.filter(task => task.ownerId === user?.uid);
+      default:
+        return tasks;
+    }
+  };
 
   useEffect(() => {
     if (user?.uid) {  
-      dispatch(fetchTasks(user.uid))
-        .unwrap()
-        .catch(err => {
+      const fetchAllTasks = async () => {
+        try {
+          if (user.role === 'admin') {
+            await dispatch(fetchTasks()).unwrap();
+          } else {
+            await dispatch(fetchTasks(user.uid)).unwrap();
+          }
+        } catch (err) {
           console.error('Failed to fetch tasks:', err);
           setFetchError('Failed to load tasks. Please check your permissions.');
+        }
+      };
+      fetchAllTasks();
+      getUsers()
+        .then(setUsers)
+        .catch(err => {
+          console.error('Failed to fetch users:', err);
         });
-      
-      // Only fetch users if admin
-      if (user.role === 'admin') {
-        getUsers()
-          .then(setUsers)
-          .catch(err => {
-            console.error('Failed to fetch users:', err);
-          });
-      }
     }
-  }, [dispatch, user?.uid, user?.role]);
+  }, [dispatch, user]); 
 
   useEffect(() => {
     if (tasks.length > 0) {
@@ -64,7 +88,12 @@ const UserDashboard = () => {
   const handleTaskCreated = async (taskData) => {
     try {
       await dispatch(createTask(taskData)).unwrap();
-      dispatch(fetchTasks(user.uid));
+      // Refresh tasks after creation
+      if (user.role === 'admin') {
+        dispatch(fetchTasks());
+      } else {
+        dispatch(fetchTasks(user.uid));
+      }
     } catch (err) {
       console.error('Failed to create task:', err);
       setFetchError('Failed to create task. Please check your permissions.');
@@ -74,7 +103,12 @@ const UserDashboard = () => {
   const handleTaskUpdated = async (taskId, taskData) => {
     try {
       await dispatch(editTask({ id: taskId, taskData })).unwrap();
-      dispatch(fetchTasks(user.uid));
+      // Refresh tasks after update
+      if (user.role === 'admin') {
+        dispatch(fetchTasks());
+      } else {
+        dispatch(fetchTasks(user.uid));
+      }
     } catch (err) {
       console.error('Failed to update task:', err);
       setFetchError('Failed to update task. Please check your permissions.');
@@ -84,7 +118,12 @@ const UserDashboard = () => {
   const handleTaskDeleted = async (taskId) => {
     try {
       await dispatch(removeTask(taskId)).unwrap();
-      dispatch(fetchTasks(user.uid));
+      // Refresh tasks after deletion
+      if (user.role === 'admin') {
+        dispatch(fetchTasks());
+      } else {
+        dispatch(fetchTasks(user.uid));
+      }
     } catch (err) {
       console.error('Failed to delete task:', err);
       setFetchError('Failed to delete task. Please check your permissions.');
@@ -95,17 +134,11 @@ const UserDashboard = () => {
     exportTasksToCSV(tasks, users);
   };
 
-  if (status === 'loading') {
-    return (
-      <AuthGuard>
-        <DashboardLayout>
-          <Box display="flex" justifyContent="center" alignItems="center" minHeight="60vh">
-            <Typography>Loading...</Typography>
-          </Box>
-        </DashboardLayout>
-      </AuthGuard>
-    );
-  }
+  const handleTabChange = (event, newValue) => {
+    setCurrentTab(newValue);
+  };
+
+  const filteredTasks = getFilteredTasks();
 
   return (
     <AuthGuard>
@@ -201,10 +234,19 @@ const UserDashboard = () => {
               </Card>
             </Grid>
           </Grid>
+
+          {/* Task Tabs */}
+          <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
+            <Tabs value={currentTab} onChange={handleTabChange} aria-label="task tabs">
+              <Tab label={user?.role === 'admin' ? "All Tasks" : "My Tasks"} />
+              <Tab label="Assigned to Me" />
+              {user?.role !== 'admin' && <Tab label="Created by Me" />}
+            </Tabs>
+          </Box>
         </Box>
 
         <TaskList
-          tasks={tasks}
+          tasks={filteredTasks}
           users={users}
           onTaskCreated={handleTaskCreated}
           onTaskUpdated={handleTaskUpdated}

@@ -11,7 +11,7 @@ const schema = yup.object().shape({
   description: yup.string().required('Description is required'),
   status: yup.string().required('Status is required'),
   dueDate: yup.date().required('Due date is required').min(new Date(), 'Due date must be in the future'),
-  assignedTo: yup.string(),
+  assignedTo: yup.string().nullable(), // Allow null/empty values
 });
 
 const TaskForm = ({ task, onSubmit, users, error }) => {
@@ -29,19 +29,29 @@ const TaskForm = ({ task, onSubmit, users, error }) => {
 
   useEffect(() => {
     if (task) {
-      reset(task);
+      reset({
+        ...task,
+        dueDate: task.dueDate ? new Date(task.dueDate) : new Date(),
+        assignedTo: task.assignedTo || '',
+      });
     }
   }, [task, reset]);
 
   const handleFormSubmit = (data) => {
-    onSubmit({
+    const formattedData = {
       ...data,
       ownerId: user.uid,
-    });
+      assignedTo: data.assignedTo || null,
+      dueDate: data.dueDate instanceof Date ? data.dueDate.toISOString() : data.dueDate,
+    };
+    onSubmit(formattedData);
   };
 
+  // Filter out current user from assignable users list
+  const assignableUsers = users ? users.filter(u => u.uid !== user.uid) : [];
+
   return (
-    <form onSubmit={handleSubmit(handleFormSubmit)}>
+    <Box component="form" onSubmit={handleSubmit(handleFormSubmit)} sx={{ mt: 2 }}>
       <Stack spacing={3}>
         {error && <Alert severity="error">{error}</Alert>}
         
@@ -52,7 +62,7 @@ const TaskForm = ({ task, onSubmit, users, error }) => {
           helperText={errors.title?.message}
           fullWidth
         />
-        
+
         <TextField
           label="Description"
           {...register('description')}
@@ -62,68 +72,83 @@ const TaskForm = ({ task, onSubmit, users, error }) => {
           rows={4}
           fullWidth
         />
-        
+
         <FormControl fullWidth error={!!errors.status}>
           <InputLabel>Status</InputLabel>
-          <Select
-            label="Status"
-            {...register('status')}
-            defaultValue={task?.status || 'todo'}
-          >
-            <MenuItem value="todo">To Do</MenuItem>
-            <MenuItem value="in-progress">In Progress</MenuItem>
-            <MenuItem value="done">Done</MenuItem>
-          </Select>
-          {errors.status && <Box sx={{ color: 'error.main', fontSize: '0.75rem', ml: 2, mt: 0.5 }}>{errors.status.message}</Box>}
-        </FormControl>
-        
-        <Box>
           <Controller
-            name="dueDate"
+            name="status"
             control={control}
-            render={({ field, fieldState: { error } }) => (
-              <DatePicker
-                label="Due Date"
-                value={field.value}
-                onChange={(newValue) => {
-                  field.onChange(newValue);
-                }}
-                renderInput={(params) => (
-                  <TextField
-                    {...params}
-                    fullWidth
-                    error={!!error}
-                    helperText={error?.message}
-                  />
-                )}
-              />
+            render={({ field }) => (
+              <Select
+                {...field}
+                label="Status"
+              >
+                <MenuItem value="todo">To Do</MenuItem>
+                <MenuItem value="in-progress">In Progress</MenuItem>
+                <MenuItem value="done">Done</MenuItem>
+              </Select>
             )}
           />
-        </Box>
-        
-        {users && users.length > 0 && (
-          <FormControl fullWidth>
-            <InputLabel>Assign To</InputLabel>
-            <Select
-              label="Assign To"
-              {...register('assignedTo')}
-              defaultValue={task?.assignedTo || ''}
-            >
-              <MenuItem value="">Unassigned</MenuItem>
-              {users.map((user) => (
-                <MenuItem key={user.uid} value={user.uid}>
-                  {user.email}
+          {errors.status && <Alert severity="error">{errors.status.message}</Alert>}
+        </FormControl>
+
+        <Controller
+          name="dueDate"
+          control={control}
+          render={({ field }) => (
+            <DatePicker
+              label="Due Date"
+              value={field.value}
+              onChange={(newValue) => {
+                field.onChange(newValue);
+              }}
+              renderInput={(params) => (
+                <TextField 
+                  {...params}
+                  error={!!errors.dueDate}
+                  helperText={errors.dueDate?.message}
+                  fullWidth
+                />
+              )}
+            />
+          )}
+        />
+
+        {/* Assignment Section - Always show for both admin and regular users */}
+        <FormControl fullWidth>
+          <InputLabel>Assign To</InputLabel>
+          <Controller
+            name="assignedTo"
+            control={control}
+            render={({ field }) => (
+              <Select
+                {...field}
+                label="Assign To"
+                value={field.value || ''}
+              >
+                <MenuItem value="">
+                  <em>Unassigned</em>
                 </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-        )}
-        
-        <Button type="submit" variant="contained" size="large">
+                {assignableUsers.map((assignableUser) => (
+                  <MenuItem key={assignableUser.uid} value={assignableUser.uid}>
+                    {assignableUser.email || assignableUser.displayName || `User ${assignableUser.uid}`}
+                  </MenuItem>
+                ))}
+              </Select>
+            )}
+          />
+        </FormControl>
+
+        <Button 
+          type="submit" 
+          variant="contained" 
+          size="large"
+          fullWidth
+        >
           {task ? 'Update Task' : 'Create Task'}
         </Button>
       </Stack>
-    </form>
+    </Box>
   );
 };
 

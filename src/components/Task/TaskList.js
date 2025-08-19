@@ -31,24 +31,30 @@ const TaskList = ({ tasks, users, onTaskCreated, onTaskUpdated, onTaskDeleted, c
 
   const columns = [
     { field: 'title', headerName: 'Title', flex: 1 },
-    { field: 'description', headerName: 'Description', flex: 2 },
-    { 
-      field: 'status', 
-      headerName: 'Status', 
+    { field: 'description', headerName: 'Description', flex: 1.5 },
+    {
+      field: 'status',
+      headerName: 'Status',
       flex: 1,
       renderCell: (params) => (
-        <Chip 
-          label={params.value} 
-          color={statusColors[params.value]} 
+        <Chip
+          label={params.value}
+          color={statusColors[params.value]}
           variant="outlined"
         />
       )
     },
-    { 
-      field: 'dueDate', 
-      headerName: 'Due Date', 
+    {
+      field: 'dueDate',
+      headerName: 'Due Date',
       flex: 1,
-      valueFormatter: (params) => new Date(params.value).toLocaleDateString()
+      valueFormatter: (params) => {
+        try {
+          return new Date(params.value).toLocaleDateString();
+        } catch (e) {
+          return 'Invalid Date';
+        }
+      }
     },
     {
       field: 'actions',
@@ -58,7 +64,7 @@ const TaskList = ({ tasks, users, onTaskCreated, onTaskUpdated, onTaskDeleted, c
         const task = params.row;
         return (
           <Box>
-            <IconButton 
+            <IconButton
               onClick={(e) => {
                 e.stopPropagation();
                 handleEdit(task);
@@ -68,7 +74,7 @@ const TaskList = ({ tasks, users, onTaskCreated, onTaskUpdated, onTaskDeleted, c
             >
               <Edit />
             </IconButton>
-            <IconButton 
+            <IconButton
               onClick={(e) => {
                 e.stopPropagation();
                 handleDeleteClick(task);
@@ -119,7 +125,10 @@ const TaskList = ({ tasks, users, onTaskCreated, onTaskUpdated, onTaskDeleted, c
     }
   };
 
-  const handleSubmit = async (taskData) => {
+  const handleSubmit = async (taskData, event) => {
+    if (event) {
+      event.preventDefault();
+    }
     try {
       if (selectedTask) {
         await onTaskUpdated(selectedTask.id, taskData);
@@ -151,7 +160,15 @@ const TaskList = ({ tasks, users, onTaskCreated, onTaskUpdated, onTaskDeleted, c
         onRowClick={handleRowClick}
       />
 
-      <Dialog open={open} onClose={() => setOpen(false)} maxWidth="md" fullWidth>
+      <Dialog
+        open={open}
+        onClose={(e) => {
+          e.stopPropagation();
+          setOpen(false);
+        }}
+        maxWidth="md"
+        fullWidth
+      >
         <DialogTitle>{selectedTask ? 'Edit Task' : 'Create Task'}</DialogTitle>
         <DialogContent>
           {formError && (
@@ -159,10 +176,10 @@ const TaskList = ({ tasks, users, onTaskCreated, onTaskUpdated, onTaskDeleted, c
               {formError}
             </Alert>
           )}
-          <TaskForm 
-            task={selectedTask} 
-            onSubmit={handleSubmit} 
-            users={users} 
+          <TaskForm
+            task={selectedTask}
+            onSubmit={handleSubmit}
+            users={users}
             error={formError}
           />
         </DialogContent>
