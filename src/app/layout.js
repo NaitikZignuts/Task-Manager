@@ -12,7 +12,7 @@ export default function RootLayout({ children }) {
       <body className="min-h-screen flex flex-col">
         <Provider store={store}>
           <LocalizationProvider dateAdapter={AdapterDateFns}>
-            <main className="flex-grow container mx-auto px-4 py-8">
+            <main >
               {children}
             </main>
           </LocalizationProvider>

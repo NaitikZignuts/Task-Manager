@@ -1,6 +1,5 @@
-import { useState } from 'react';
-import { DataGrid } from '@mui/x-data-grid';
-import { Button, Chip, Stack, Typography, IconButton, Box, Alert } from '@mui/material';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { Button, Chip, Typography, IconButton, Alert, CircularProgress } from '@mui/material';
 import { Edit, Delete } from '@mui/icons-material';
 import TaskForm from './TaskForm';
 import { Dialog, DialogTitle, DialogContent } from '@mui/material';
@@ -19,7 +18,49 @@ const TaskList = ({ tasks, users, onTaskCreated, onTaskUpdated, onTaskDeleted, c
   const [selectedTask, setSelectedTask] = useState(null);
   const [taskToDelete, setTaskToDelete] = useState(null);
   const [formError, setFormError] = useState('');
+  const [displayedTasks, setDisplayedTasks] = useState([]);
+  const [itemsPerPage] = useState(5);
+  const [hasMore, setHasMore] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const observer = useRef();
   const router = useRouter();
+
+  useEffect(() => {
+    setDisplayedTasks(tasks.slice(0, itemsPerPage));
+    setHasMore(tasks.length > itemsPerPage);
+  }, [tasks, itemsPerPage]);
+
+  const lastTaskElementRef = useCallback(node => {
+    if (loading) return;
+    if (observer.current) observer.current.disconnect();
+
+    observer.current = new IntersectionObserver(entries => {
+      if (entries[0].isIntersecting && hasMore) {
+        loadMoreTasks();
+      }
+    });
+
+    if (node) observer.current.observe(node);
+  }, [loading, hasMore]);
+
+  const loadMoreTasks = () => {
+    if (loading || !hasMore) return;
+
+    setLoading(true);
+
+    setTimeout(() => {
+      const currentLength = displayedTasks.length;
+      const nextItems = tasks.slice(currentLength, currentLength + itemsPerPage);
+
+      setDisplayedTasks(prev => {
+        const existingIds = new Set(prev.map(task => task.id));
+        const newItems = nextItems.filter(task => !existingIds.has(task.id));
+        return [...prev, ...newItems];
+      });
+      setHasMore(currentLength + nextItems.length < tasks.length);
+      setLoading(false);
+    }, 2000); 
+  };
 
   const canEditTask = (task) => {
     return currentUser?.role === 'admin' || task.ownerId === currentUser?.uid;
@@ -29,70 +70,8 @@ const TaskList = ({ tasks, users, onTaskCreated, onTaskUpdated, onTaskDeleted, c
     return currentUser?.role === 'admin' || task.ownerId === currentUser?.uid;
   };
 
-  const columns = [
-    { field: 'title', headerName: 'Title', flex: 1 },
-    { field: 'description', headerName: 'Description', flex: 1.5 },
-    {
-      field: 'status',
-      headerName: 'Status',
-      flex: 1,
-      renderCell: (params) => (
-        <Chip
-          label={params.value}
-          color={statusColors[params.value]}
-          variant="outlined"
-        />
-      )
-    },
-    {
-      field: 'dueDate',
-      headerName: 'Due Date',
-      flex: 1,
-      valueFormatter: (params) => {
-        try {
-          return new Date(params.value).toLocaleDateString();
-        } catch (e) {
-          return 'Invalid Date';
-        }
-      }
-    },
-    {
-      field: 'actions',
-      headerName: 'Actions',
-      flex: 1,
-      renderCell: (params) => {
-        const task = params.row;
-        return (
-          <Box>
-            <IconButton
-              onClick={(e) => {
-                e.stopPropagation();
-                handleEdit(task);
-              }}
-              disabled={!canEditTask(task)}
-              size="small"
-            >
-              <Edit />
-            </IconButton>
-            <IconButton
-              onClick={(e) => {
-                e.stopPropagation();
-                handleDeleteClick(task);
-              }}
-              disabled={!canDeleteTask(task)}
-              size="small"
-              color="error"
-            >
-              <Delete />
-            </IconButton>
-          </Box>
-        );
-      }
-    }
-  ];
-
-  const handleRowClick = (params) => {
-    router.push(`/tasks/${params.id}`);
+  const handleRowClick = (taskId) => {
+    router.push(`/tasks/${taskId}`);
   };
 
   const handleCreate = () => {
@@ -101,13 +80,15 @@ const TaskList = ({ tasks, users, onTaskCreated, onTaskUpdated, onTaskDeleted, c
     setOpen(true);
   };
 
-  const handleEdit = (task) => {
+  const handleEdit = (task, e) => {
+    e.stopPropagation();
     setSelectedTask(task);
     setFormError('');
     setOpen(true);
   };
 
-  const handleDeleteClick = (task) => {
+  const handleDeleteClick = (task, e) => {
+    e.stopPropagation();
     setTaskToDelete(task);
     setConfirmOpen(true);
   };
@@ -143,21 +124,181 @@ const TaskList = ({ tasks, users, onTaskCreated, onTaskUpdated, onTaskDeleted, c
     }
   };
 
+  const formatDate = (dateString) => {
+    try {
+      return new Date(dateString).toLocaleDateString();
+    } catch (e) {
+      return 'Invalid Date';
+    }
+  };
+
   return (
-    <div style={{ height: 600, width: '100%' }}>
-      <Stack direction="row" justifyContent="space-between" mb={2}>
-        <Typography variant="h5">Task List</Typography>
-        <Button variant="contained" onClick={handleCreate}>
+    <div className="w-full">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+        <Typography variant="h5" className="font-semibold text-gray-900">
+          Task List
+        </Typography>
+        <Button
+          variant="contained"
+          onClick={handleCreate}
+          className="w-full sm:w-auto shadow-sm"
+        >
           Create Task
         </Button>
-      </Stack>
+      </div>
 
-      <DataGrid
-        rows={tasks}
-        columns={columns}
-        pageSize={10}
-        rowsPerPageOptions={[10]}
-      />
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+        {/* Mobile Header */}
+        <div className="block sm:hidden bg-gray-50 px-4 py-3 border-b border-gray-200">
+          <Typography variant="subtitle2" className="font-semibold text-gray-700">
+            Tasks ({tasks.length})
+          </Typography>
+        </div>
+
+        {/* Desktop Header */}
+        <div className="hidden sm:grid sm:grid-cols-12 bg-gray-50 px-6 py-3 border-b border-gray-200 text-sm font-medium text-gray-700">
+          <div className="col-span-3">Title</div>
+          <div className="col-span-4">Description</div>
+          <div className="col-span-2">Status</div>
+          <div className="col-span-2">Due Date</div>
+          <div className="col-span-1 text-center">Actions</div>
+        </div>
+
+        {/* Task Items */}
+        <div className="divide-y divide-gray-100">
+          {displayedTasks.map((task, index) => {
+            const isLast = index === displayedTasks.length - 1;
+
+            return (
+              <div
+                key={task.id}
+                ref={isLast ? lastTaskElementRef : null}
+                onClick={() => handleRowClick(task.id)}
+                className="hover:bg-gray-50 cursor-pointer transition-colors duration-150"
+              >
+                {/* Mobile View */}
+                <div className="block sm:hidden p-4">
+                  <div className="flex justify-between items-start mb-2">
+                    <Typography variant="subtitle1" className="font-medium text-gray-900 flex-1 mr-2">
+                      {task.title}
+                    </Typography>
+                    <div className="flex items-center gap-1 ml-2">
+                      <IconButton
+                        onClick={(e) => handleEdit(task, e)}
+                        disabled={!canEditTask(task)}
+                        size="small"
+                        className="p-1"
+                      >
+                        <Edit fontSize="small" />
+                      </IconButton>
+                      <IconButton
+                        onClick={(e) => handleDeleteClick(task, e)}
+                        disabled={!canDeleteTask(task)}
+                        size="small"
+                        color="error"
+                        className="p-1"
+                      >
+                        <Delete fontSize="small" />
+                      </IconButton>
+                    </div>
+                  </div>
+
+                  <Typography variant="body2" className="text-gray-600 mb-3 line-clamp-2">
+                    {task.description}
+                  </Typography>
+
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Chip
+                      label={task.status}
+                      color={statusColors[task.status]}
+                      variant="outlined"
+                      size="small"
+                    />
+                    <Typography variant="caption" className="text-gray-500">
+                      Due: {formatDate(task.dueDate)}
+                    </Typography>
+                  </div>
+                </div>
+
+                {/* Desktop View */}
+                <div className="hidden sm:grid sm:grid-cols-12 px-6 py-4 items-center">
+                  <div className="col-span-3">
+                    <Typography variant="body2" className="font-medium text-gray-900 truncate">
+                      {task.title}
+                    </Typography>
+                  </div>
+
+                  <div className="col-span-4">
+                    <Typography variant="body2" className="text-gray-600 line-clamp-2">
+                      {task.description}
+                    </Typography>
+                  </div>
+
+                  <div className="col-span-2">
+                    <Chip
+                      label={task.status}
+                      color={statusColors[task.status]}
+                      variant="outlined"
+                      size="small"
+                    />
+                  </div>
+
+                  <div className="col-span-2">
+                    <Typography variant="body2" className="text-gray-600">
+                      {formatDate(task.dueDate)}
+                    </Typography>
+                  </div>
+
+                  <div className="col-span-1 flex justify-center">
+                    <div className="flex items-center gap-1">
+                      <IconButton
+                        onClick={(e) => handleEdit(task, e)}
+                        disabled={!canEditTask(task)}
+                        size="small"
+                      >
+                        <Edit fontSize="small" />
+                      </IconButton>
+                      <IconButton
+                        onClick={(e) => handleDeleteClick(task, e)}
+                        disabled={!canDeleteTask(task)}
+                        size="small"
+                        color="error"
+                      >
+                        <Delete fontSize="small" />
+                      </IconButton>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Loading indicator */}
+        {loading && (
+          <div className="px-6 py-4 text-center border-t border-gray-100">
+            <CircularProgress size={24} className="mr-2" />
+          </div>
+        )}
+
+        {/* No more tasks indicator */}
+        {!hasMore && tasks.length > 0 && (
+          <div className="px-6 py-4 text-center border-t border-gray-100">
+            <Typography variant="body2" className="text-gray-500">
+              No more tasks to load
+            </Typography>
+          </div>
+        )}
+
+        {/* Empty state */}
+        {tasks.length === 0 && (
+          <div className="px-6 py-12 text-center">
+            <Typography variant="body1" className="text-gray-500">
+              No tasks found. Create your first task to get started.
+            </Typography>
+          </div>
+        )}
+      </div>
 
       <Dialog
         open={open}
@@ -171,7 +312,7 @@ const TaskList = ({ tasks, users, onTaskCreated, onTaskUpdated, onTaskDeleted, c
         <DialogTitle>{selectedTask ? 'Edit Task' : 'Create Task'}</DialogTitle>
         <DialogContent>
           {formError && (
-            <Alert severity="error" sx={{ mb: 2 }}>
+            <Alert severity="error" className="mb-4">
               {formError}
             </Alert>
           )}
