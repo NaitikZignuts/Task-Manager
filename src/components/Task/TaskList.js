@@ -1,10 +1,11 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
-import { Button, Chip, Typography, IconButton, Alert, CircularProgress } from '@mui/material';
-import { Edit, Delete } from '@mui/icons-material';
+import { useState, useEffect } from 'react';
+import { Button, Chip, Typography, IconButton, Alert, Pagination, Box } from '@mui/material';
+import { Edit } from '@mui/icons-material';
 import TaskForm from './TaskForm';
 import { Dialog, DialogTitle, DialogContent } from '@mui/material';
 import { useRouter } from 'next/navigation';
 import ConfirmationDialog from '../ConfirmationDialog';
+import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 
 const statusColors = {
   todo: 'default',
@@ -18,48 +19,21 @@ const TaskList = ({ tasks, users, onTaskCreated, onTaskUpdated, onTaskDeleted, c
   const [selectedTask, setSelectedTask] = useState(null);
   const [taskToDelete, setTaskToDelete] = useState(null);
   const [formError, setFormError] = useState('');
-  const [displayedTasks, setDisplayedTasks] = useState([]);
-  const [itemsPerPage] = useState(5);
-  const [hasMore, setHasMore] = useState(true);
-  const [loading, setLoading] = useState(false);
-  const observer = useRef();
+  const [page, setPage] = useState(1);
+  const [rowsPerPage] = useState(10);
   const router = useRouter();
 
   useEffect(() => {
-    setDisplayedTasks(tasks.slice(0, itemsPerPage));
-    setHasMore(tasks.length > itemsPerPage);
-  }, [tasks, itemsPerPage]);
+    setPage(1);
+  }, [tasks]);
 
-  const lastTaskElementRef = useCallback(node => {
-    if (loading) return;
-    if (observer.current) observer.current.disconnect();
+  const totalPages = Math.ceil(tasks.length / rowsPerPage);
+  const startIndex = (page - 1) * rowsPerPage;
+  const endIndex = startIndex + rowsPerPage;
+  const paginatedTasks = tasks.slice(startIndex, endIndex);
 
-    observer.current = new IntersectionObserver(entries => {
-      if (entries[0].isIntersecting && hasMore) {
-        loadMoreTasks();
-      }
-    });
-
-    if (node) observer.current.observe(node);
-  }, [loading, hasMore]);
-
-  const loadMoreTasks = () => {
-    if (loading || !hasMore) return;
-
-    setLoading(true);
-
-    setTimeout(() => {
-      const currentLength = displayedTasks.length;
-      const nextItems = tasks.slice(currentLength, currentLength + itemsPerPage);
-
-      setDisplayedTasks(prev => {
-        const existingIds = new Set(prev.map(task => task.id));
-        const newItems = nextItems.filter(task => !existingIds.has(task.id));
-        return [...prev, ...newItems];
-      });
-      setHasMore(currentLength + nextItems.length < tasks.length);
-      setLoading(false);
-    }, 2000); 
+  const handlePageChange = (event, newPage) => {
+    setPage(newPage);
   };
 
   const canEditTask = (task) => {
@@ -148,14 +122,11 @@ const TaskList = ({ tasks, users, onTaskCreated, onTaskUpdated, onTaskDeleted, c
       </div>
 
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-        {/* Mobile Header */}
         <div className="block sm:hidden bg-gray-50 px-4 py-3 border-b border-gray-200">
           <Typography variant="subtitle2" className="font-semibold text-gray-700">
-            Tasks ({tasks.length})
+            Tasks ({tasks.length}) - Page {page} of {totalPages}
           </Typography>
         </div>
-
-        {/* Desktop Header */}
         <div className="hidden sm:grid sm:grid-cols-12 bg-gray-50 px-6 py-3 border-b border-gray-200 text-sm font-medium text-gray-700">
           <div className="col-span-3">Title</div>
           <div className="col-span-4">Description</div>
@@ -164,133 +135,108 @@ const TaskList = ({ tasks, users, onTaskCreated, onTaskUpdated, onTaskDeleted, c
           <div className="col-span-1 text-center">Actions</div>
         </div>
 
-        {/* Task Items */}
         <div className="divide-y divide-gray-100">
-          {displayedTasks.map((task, index) => {
-            const isLast = index === displayedTasks.length - 1;
-
-            return (
-              <div
-                key={task.id}
-                ref={isLast ? lastTaskElementRef : null}
-                onClick={() => handleRowClick(task.id)}
-                className="hover:bg-gray-50 cursor-pointer transition-colors duration-150"
-              >
-                {/* Mobile View */}
-                <div className="block sm:hidden p-4">
-                  <div className="flex justify-between items-start mb-2">
-                    <Typography variant="subtitle1" className="font-medium text-gray-900 flex-1 mr-2">
-                      {task.title}
-                    </Typography>
-                    <div className="flex items-center gap-1 ml-2">
-                      <IconButton
-                        onClick={(e) => handleEdit(task, e)}
-                        disabled={!canEditTask(task)}
-                        size="small"
-                        className="p-1"
-                      >
-                        <Edit fontSize="small" />
-                      </IconButton>
-                      <IconButton
-                        onClick={(e) => handleDeleteClick(task, e)}
-                        disabled={!canDeleteTask(task)}
-                        size="small"
-                        color="error"
-                        className="p-1"
-                      >
-                        <Delete fontSize="small" />
-                      </IconButton>
-                    </div>
-                  </div>
-
-                  <Typography variant="body2" className="text-gray-600 mb-3 line-clamp-2">
-                    {task.description}
+          {paginatedTasks.map((task) => (
+            <div
+              key={task.id}
+              onClick={() => handleRowClick(task.id)}
+              className="hover:bg-gray-50 cursor-pointer transition-colors duration-150"
+            >
+              <div className="block sm:hidden p-4">
+                <div className="flex justify-between items-start mb-2">
+                  <Typography variant="subtitle1" className="font-medium text-gray-900 flex-1 mr-2">
+                    {task.title}
                   </Typography>
-
-                  <div className="flex flex-wrap items-center gap-2">
-                    <Chip
-                      label={task.status}
-                      color={statusColors[task.status]}
-                      variant="outlined"
+                  <div className="flex items-center gap-1 ml-2">
+                    <IconButton
+                      onClick={(e) => handleEdit(task, e)}
+                      disabled={!canEditTask(task)}
                       size="small"
-                    />
-                    <Typography variant="caption" className="text-gray-500">
-                      Due: {formatDate(task.dueDate)}
-                    </Typography>
+                      className="p-1"
+                    >
+                      <Edit fontSize="small" />
+                    </IconButton>
+                    <IconButton
+                      onClick={(e) => handleDeleteClick(task, e)}
+                      disabled={!canDeleteTask(task)}
+                      size="small"
+                      color="error"
+                      className="p-1"
+                    >
+                      <DeleteOutlineIcon fontSize="small" />
+                    </IconButton>
                   </div>
                 </div>
 
-                {/* Desktop View */}
-                <div className="hidden sm:grid sm:grid-cols-12 px-6 py-4 items-center">
-                  <div className="col-span-3">
-                    <Typography variant="body2" className="font-medium text-gray-900 truncate">
-                      {task.title}
-                    </Typography>
-                  </div>
+                <Typography variant="body2" className="text-gray-600 mb-3 line-clamp-2">
+                  Description :- {task.description}
+                </Typography>
 
-                  <div className="col-span-4">
-                    <Typography variant="body2" className="text-gray-600 line-clamp-2">
-                      {task.description}
-                    </Typography>
-                  </div>
+                <div className="flex flex-wrap items-center gap-4 mt-3">
+                  <Chip
+                    label={task.status}
+                    color={statusColors[task.status]}
+                    variant="outlined"
+                    size="small"
+                  />
+                  <Typography variant="caption" className="text-gray-500">
+                    Due: {formatDate(task.dueDate)}
+                  </Typography>
+                </div>
+              </div>
 
-                  <div className="col-span-2">
-                    <Chip
-                      label={task.status}
-                      color={statusColors[task.status]}
-                      variant="outlined"
+              <div className="hidden sm:grid sm:grid-cols-12 px-6 py-4 items-center">
+                <div className="col-span-3">
+                  <Typography variant="body2" className="font-medium text-gray-900 truncate">
+                    {task.title}
+                  </Typography>
+                </div>
+
+                <div className="col-span-4">
+                  <Typography variant="body2" className="text-gray-600 line-clamp-2">
+                    {task.description}
+                  </Typography>
+                </div>
+
+                <div className="col-span-2">
+                  <Chip
+                    label={task.status}
+                    color={statusColors[task.status]}
+                    variant="outlined"
+                    size="small"
+                  />
+                </div>
+
+                <div className="col-span-2">
+                  <Typography variant="body2" className="text-gray-600">
+                    {formatDate(task.dueDate)}
+                  </Typography>
+                </div>
+
+                <div className="col-span-1 flex justify-center">
+                  <div className="flex items-center gap-1">
+                    <IconButton
+                      onClick={(e) => handleEdit(task, e)}
+                      disabled={!canEditTask(task)}
                       size="small"
-                    />
-                  </div>
-
-                  <div className="col-span-2">
-                    <Typography variant="body2" className="text-gray-600">
-                      {formatDate(task.dueDate)}
-                    </Typography>
-                  </div>
-
-                  <div className="col-span-1 flex justify-center">
-                    <div className="flex items-center gap-1">
-                      <IconButton
-                        onClick={(e) => handleEdit(task, e)}
-                        disabled={!canEditTask(task)}
-                        size="small"
-                      >
-                        <Edit fontSize="small" />
-                      </IconButton>
-                      <IconButton
-                        onClick={(e) => handleDeleteClick(task, e)}
-                        disabled={!canDeleteTask(task)}
-                        size="small"
-                        color="error"
-                      >
-                        <Delete fontSize="small" />
-                      </IconButton>
-                    </div>
+                    >
+                      <Edit fontSize="small" />
+                    </IconButton>
+                    <IconButton
+                      onClick={(e) => handleDeleteClick(task, e)}
+                      disabled={!canDeleteTask(task)}
+                      size="small"
+                      color="error"
+                    >
+                      <DeleteOutlineIcon fontSize="small" />
+                    </IconButton>
                   </div>
                 </div>
               </div>
-            );
-          })}
+            </div>
+          ))}
         </div>
 
-        {/* Loading indicator */}
-        {loading && (
-          <div className="px-6 py-4 text-center border-t border-gray-100">
-            <CircularProgress size={24} className="mr-2" />
-          </div>
-        )}
-
-        {/* No more tasks indicator */}
-        {!hasMore && tasks.length > 0 && (
-          <div className="px-6 py-4 text-center border-t border-gray-100">
-            <Typography variant="body2" className="text-gray-500">
-              No more tasks to load
-            </Typography>
-          </div>
-        )}
-
-        {/* Empty state */}
         {tasks.length === 0 && (
           <div className="px-6 py-12 text-center">
             <Typography variant="body1" className="text-gray-500">
@@ -299,6 +245,20 @@ const TaskList = ({ tasks, users, onTaskCreated, onTaskUpdated, onTaskDeleted, c
           </div>
         )}
       </div>
+
+      {tasks.length > 0 && (
+        <Box className="flex justify-center mt-6">
+          <Pagination
+            count={totalPages}
+            page={page}
+            onChange={handlePageChange}
+            color="primary"
+            showFirstButton
+            showLastButton
+            size="large"
+          />
+        </Box>
+      )}
 
       <Dialog
         open={open}

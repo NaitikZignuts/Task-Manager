@@ -8,6 +8,7 @@ import { setUser } from '../../../features/auth/authSlice';
 import GuestGuard from '@/components/GuestGuard';
 import { useForm } from 'react-hook-form';
 import FormInput from '@/components/common/FormInput';
+import { RequiredRules } from '@/components/common/commonRules';
 
 const RegisterPage = () => {
   const [error, setError] = useState('');
@@ -86,13 +87,7 @@ const RegisterPage = () => {
                     label="Email Address"
                     control={control}
                     errors={errors}
-                    rules={{
-                      required: 'Email is required',
-                      pattern: {
-                        value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                        message: 'Invalid email address'
-                      }
-                    }}
+                    rules={RequiredRules}
                     fullWidth
                   />
                 </div>

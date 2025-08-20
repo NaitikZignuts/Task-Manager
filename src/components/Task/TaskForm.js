@@ -5,6 +5,8 @@ import { DatePicker } from '@mui/x-date-pickers';
 import useAuth from '@/hooks/useAuth';
 import FormInput from '@/components/common/FormInput';
 import FormAutocomplete from '@/components/common/FormAutocomplete';
+import { statusOptions } from '../common/TaskOption';
+import { RequiredRules } from '../common/commonRules';
 
 const TaskForm = ({ task, onSubmit, users, error }) => {
   const { user } = useAuth();
@@ -65,17 +67,10 @@ const TaskForm = ({ task, onSubmit, users, error }) => {
       label: user.email || user.displayName || `User ${user.uid}`
     })) : [];
 
-  const statusOptions = [
-    { value: 'todo', label: 'To Do' },
-    { value: 'in-progress', label: 'In Progress' },
-    { value: 'done', label: 'Done' }
-  ];
 
-  // Get current values for the form as option objects
   const currentAssignedTo = assignableUsers.find(user => user.value === task?.assignedTo) || null;
   const currentStatus = statusOptions.find(status => status.value === task?.status) || statusOptions[0];
 
-  // Don't render the form until it's ready to prevent the uncontrolled to controlled error
   if (!isFormReady) {
     return null;
   }
@@ -105,9 +100,7 @@ const TaskForm = ({ task, onSubmit, users, error }) => {
           label="Description"
           control={control}
           errors={errors}
-          rules={{
-            required: 'Description is required'
-          }}
+          rules={RequiredRules}
           multiline={true}
           rows={4}
           fullWidth
@@ -119,7 +112,7 @@ const TaskForm = ({ task, onSubmit, users, error }) => {
           control={control}
           id="status-select"
           options={statusOptions}
-          rules={{ required: 'Status is required' }}
+          rules={RequiredRules}
           defaultValue={currentStatus}
         />
 
@@ -147,16 +140,13 @@ const TaskForm = ({ task, onSubmit, users, error }) => {
                   fullWidth
                   {...params}
                   customMsg={errors.dueDate?.message}
-                  rules={{
-                    required: 'DueDate is required'
-                  }}
+                  rules={RequiredRules}
                 />
               )}
             />
           )}
         />
 
-        {/* Assignment Section */}
         <FormAutocomplete
           name="assignedTo"
           label="Assign To"

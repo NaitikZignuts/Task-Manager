@@ -3,33 +3,34 @@ import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { createTask, editTask, fetchTasks, removeTask } from '../../../features/tasks/taskSlice';
 import TaskList from '../../../components/Task/TaskList';
-import UserList from '../../../components/User/UserList'; 
+import UserList from '../../../components/User/UserList';
 import DashboardLayout from '../../../components/DashboardLayout';
 import { getUsers } from '../../../features/auth/authService';
 import AuthGuard from '@/components/AuthGuard';
-import { 
-  Typography, 
-  Card, 
-  CardContent, 
-  Button, 
-  Alert, 
-  Tabs, 
-  Tab, 
+import {
+  Typography,
+  Card,
+  CardContent,
+  Button,
+  Alert,
+  Tabs,
+  Tab,
   Box,
   Chip,
   CircularProgress
 } from '@mui/material';
-import { 
-  Download, 
-  People, 
+import {
+  Download,
+  People,
   Search,
   FilterList
-} from '@mui/icons-material'; 
+} from '@mui/icons-material';
 import { exportTasksToCSV } from "../../../components/exportUtils"
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import FormInput from '@/components/common/FormInput';
 import FormAutocomplete from '@/components/common/FormAutocomplete';
 import { Controller, useForm } from 'react-hook-form';
+import { dateOptions, statusOptions } from '@/components/common/TaskOption';
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
 
@@ -57,26 +58,26 @@ const UserDashboard = () => {
 
   const getFilteredTasks = () => {
     if (!tasks) return [];
-    
+
     let filtered = tasks;
-    
+
     if (searchTerm) {
       const term = searchTerm.toLowerCase();
-      filtered = filtered.filter(task => 
-        task.title.toLowerCase().includes(term) || 
+      filtered = filtered.filter(task =>
+        task.title.toLowerCase().includes(term) ||
         task.description.toLowerCase().includes(term)
       );
     }
-    
+
     if (statusFilter && statusFilter !== 'all') {
       filtered = filtered.filter(task => task.status === statusFilter);
     }
-    
+
     if (dateFilter !== 'all') {
       const today = new Date();
       today.setHours(0, 0, 0, 0);
-      
-      switch(dateFilter) {
+
+      switch (dateFilter) {
         case 'today':
           filtered = filtered.filter(task => {
             const dueDate = new Date(task.dueDate);
@@ -110,9 +111,9 @@ const UserDashboard = () => {
           break;
       }
     }
-    
+
     switch (currentTab) {
-      case 0: 
+      case 0:
         if (user?.role === 'admin') {
           return filtered;
         } else {
@@ -120,7 +121,7 @@ const UserDashboard = () => {
         }
       case 1:
         return filtered.filter(task => task.assignedTo === user?.uid);
-      case 2: 
+      case 2:
         if (user?.role === 'admin') {
           return [];
         } else {
@@ -132,7 +133,7 @@ const UserDashboard = () => {
   };
 
   useEffect(() => {
-    if (user?.uid) {  
+    if (user?.uid) {
       const fetchAllTasks = async () => {
         try {
           if (user.role === 'admin') {
@@ -146,7 +147,7 @@ const UserDashboard = () => {
         }
       };
       fetchAllTasks();
-      
+
       getUsers()
         .then(allUsers => {
           if (user.role === 'admin') {
@@ -160,7 +161,7 @@ const UserDashboard = () => {
           setFetchError('Failed to load users. Please check your permissions.');
         });
     }
-  }, [dispatch, user]); 
+  }, [dispatch, user]);
 
   useEffect(() => {
     if (tasks.length > 0) {
@@ -260,43 +261,30 @@ const UserDashboard = () => {
     { name: 'Done', value: analytics.done || 0 },
   ];
 
-  const statusOptions = [
-    { value: 'todo', label: 'To Do' },
-    { value: 'in-progress', label: 'In Progress' },
-    { value: 'done', label: 'Done' }
-  ];
-
-  const dateOptions = [
-    { value: 'today', label: 'Today' },
-    { value: 'week', label: 'Next 7 Days' },
-    { value: 'month', label: 'This Month' },
-    { value: 'overdue', label: 'Overdue' }
-  ];
-
   return (
     <AuthGuard>
       <DashboardLayout>
         <div className="mb-8">
-          <Typography variant="h4" className="mb-6 font-bold text-gray-900">
+          <Typography variant="h4" className="mb-7 font-bold text-gray-900">
             Task Dashboard
           </Typography>
-          
+
           {fetchError && (
             <Alert severity="error" className="mb-4">
               {fetchError}
             </Alert>
           )}
-          
+
           {error && (
             <Alert severity="error" className="mb-4">
               {error}
             </Alert>
           )}
-          
+
           {user?.role === 'admin' && (
             <div className="flex justify-end mb-4">
-              <Button 
-                variant="outlined" 
+              <Button
+                variant="outlined"
                 startIcon={<Download />}
                 onClick={handleExport}
                 className="shadow-sm"
@@ -305,10 +293,10 @@ const UserDashboard = () => {
               </Button>
             </div>
           )}
-          
+
           {!(user?.role === 'admin' && currentTab === 2) && (
             <>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 mb-8">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 mb-8 mt-3">
                 <Card className="shadow-sm hover:shadow-md transition-shadow">
                   <CardContent className="p-4">
                     <Typography className="text-gray-600 text-sm mb-2">
@@ -380,21 +368,21 @@ const UserDashboard = () => {
                         Task Status Analytics
                       </Typography>
                       <Box sx={{ display: 'flex', gap: 1 }}>
-                        <Chip 
-                          label="Pie Chart" 
-                          onClick={() => setChartType('pie')} 
+                        <Chip
+                          label="Pie Chart"
+                          onClick={() => setChartType('pie')}
                           color={chartType === 'pie' ? 'primary' : 'default'}
                           variant={chartType === 'pie' ? 'filled' : 'outlined'}
                         />
-                        <Chip 
-                          label="Bar Chart" 
-                          onClick={() => setChartType('bar')} 
+                        <Chip
+                          label="Bar Chart"
+                          onClick={() => setChartType('bar')}
                           color={chartType === 'bar' ? 'primary' : 'default'}
                           variant={chartType === 'bar' ? 'filled' : 'outlined'}
                         />
                       </Box>
                     </div>
-                    
+
                     <div className="h-80">
                       <ResponsiveContainer width="100%" height="100%">
                         {chartType === 'pie' ? (
@@ -461,7 +449,7 @@ const UserDashboard = () => {
                         />
                       )}
                     />
-                    
+
                     <Controller
                       name="statusFilter"
                       control={control}
@@ -483,7 +471,7 @@ const UserDashboard = () => {
                         />
                       )}
                     />
-                    
+
                     <Controller
                       name="dateFilter"
                       control={control}
@@ -507,16 +495,20 @@ const UserDashboard = () => {
           )}
 
           <div className="border-b border-gray-200 mb-6">
-            <Tabs 
-              value={currentTab} 
-              onChange={handleTabChange} 
+            <Tabs
+              value={currentTab}
+              onChange={handleTabChange}
               aria-label="dashboard tabs"
               className="min-h-12"
+              variant="scrollable"
+              scrollButtons="auto"
+              allowScrollButtonsMobile
             >
+
               {tabLabels.map((tab, index) => (
-                <Tab 
+                <Tab
                   key={index}
-                  label={tab.label} 
+                  label={tab.label}
                   icon={tab.icon}
                   iconPosition="start"
                   className="min-h-12 text-sm font-medium"
@@ -536,6 +528,7 @@ const UserDashboard = () => {
             onTaskUpdated={handleTaskUpdated}
             onTaskDeleted={handleTaskDeleted}
             currentUser={user}
+            currentTab={currentTab}
           />
         )}
       </DashboardLayout>
