@@ -11,7 +11,7 @@ const schema = yup.object().shape({
   description: yup.string().required('Description is required'),
   status: yup.string().required('Status is required'),
   dueDate: yup.date().required('Due date is required').min(new Date(), 'Due date must be in the future'),
-  assignedTo: yup.string().nullable(), // Allow null/empty values
+  assignedTo: yup.string().nullable(), 
 });
 
 const TaskForm = ({ task, onSubmit, users, error }) => {
@@ -47,14 +47,15 @@ const TaskForm = ({ task, onSubmit, users, error }) => {
     onSubmit(formattedData);
   };
 
-  // Filter out current user from assignable users list
-  const assignableUsers = users ? users.filter(u => u.uid !== user.uid) : [];
+  const assignableUsers = users ? users.filter(u =>
+    u.uid !== user.uid && u.role !== 'admin'
+  ) : [];
 
   return (
     <Box component="form" onSubmit={handleSubmit(handleFormSubmit)} sx={{ mt: 2 }}>
       <Stack spacing={3}>
         {error && <Alert severity="error">{error}</Alert>}
-        
+
         <TextField
           label="Title"
           {...register('title')}
@@ -103,7 +104,7 @@ const TaskForm = ({ task, onSubmit, users, error }) => {
                 field.onChange(newValue);
               }}
               renderInput={(params) => (
-                <TextField 
+                <TextField
                   {...params}
                   error={!!errors.dueDate}
                   helperText={errors.dueDate?.message}
@@ -139,9 +140,9 @@ const TaskForm = ({ task, onSubmit, users, error }) => {
           />
         </FormControl>
 
-        <Button 
-          type="submit" 
-          variant="contained" 
+        <Button
+          type="submit"
+          variant="contained"
           size="large"
           fullWidth
         >

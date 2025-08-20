@@ -44,7 +44,6 @@ export const fetchTasks = createAsyncThunk(
           tasks.push({
             id: doc.id,
             ...data,
-            // Ensure dates are converted to strings
             createdAt: data.createdAt?.toDate?.()?.toISOString() || new Date().toISOString(),
             dueDate: data.dueDate?.toDate?.()?.toISOString() || new Date().toISOString(),
             updatedAt: data.updatedAt?.toDate?.()?.toISOString() || new Date().toISOString(),
@@ -58,7 +57,6 @@ export const fetchTasks = createAsyncThunk(
             tasks.push({
               id: doc.id,
               ...data,
-              // Ensure dates are converted to strings
               createdAt: data.createdAt?.toDate?.()?.toISOString() || new Date().toISOString(),
               dueDate: data.dueDate?.toDate?.()?.toISOString() || new Date().toISOString(),
               updatedAt: data.updatedAt?.toDate?.()?.toISOString() || new Date().toISOString(),
@@ -77,7 +75,6 @@ export const fetchTasks = createAsyncThunk(
           tasks.push({
             id: doc.id,
             ...data,
-            // Ensure dates are converted to strings
             createdAt: data.createdAt?.toDate?.()?.toISOString() || new Date().toISOString(),
             dueDate: data.dueDate?.toDate?.()?.toISOString() || new Date().toISOString(),
             updatedAt: data.updatedAt?.toDate?.()?.toISOString() || new Date().toISOString(),
@@ -99,7 +96,6 @@ export const createTask = createAsyncThunk(
     try {
       const tasksRef = collection(db, 'tasks');
       
-      // Convert dueDate to Firestore Timestamp if it's a string
       const dueDate = taskData.dueDate ? 
         (typeof taskData.dueDate === 'string' ? new Date(taskData.dueDate) : taskData.dueDate) : 
         new Date();
@@ -111,7 +107,6 @@ export const createTask = createAsyncThunk(
         updatedAt: new Date(),
       });
       
-      // Return serializable data (convert dates to strings)
       return {
         id: docRef.id,
         ...taskData,
@@ -132,7 +127,6 @@ export const editTask = createAsyncThunk(
     try {
       const taskRef = doc(db, 'tasks', id);
       
-      // Convert dueDate to Firestore Timestamp if it's a string
       const dueDate = taskData.dueDate ? 
         (typeof taskData.dueDate === 'string' ? new Date(taskData.dueDate) : taskData.dueDate) : 
         new Date();
@@ -143,7 +137,6 @@ export const editTask = createAsyncThunk(
         updatedAt: new Date(),
       });
       
-      // Return serializable data
       return {
         id,
         ...taskData,

@@ -3,11 +3,12 @@ import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { createTask, editTask, fetchTasks, removeTask } from '../../../features/tasks/taskSlice';
 import TaskList from '../../../components/Task/TaskList';
+import UserList from '../../../components/User/UserList'; 
 import DashboardLayout from '../../../components/DashboardLayout';
 import { getUsers } from '../../../features/auth/authService';
 import AuthGuard from '@/components/AuthGuard';
 import { Typography, Box, Card, CardContent, Grid, Button, Alert, Tabs, Tab } from '@mui/material';
-import { Download } from '@mui/icons-material';
+import { Download, People } from '@mui/icons-material'; 
 import { exportTasksToCSV } from "../../../components/exportUtils"
 
 const UserDashboard = () => {
@@ -19,21 +20,24 @@ const UserDashboard = () => {
   const [fetchError, setFetchError] = useState('');
   const [currentTab, setCurrentTab] = useState(0);
 
-  // Filter tasks based on current tab
   const getFilteredTasks = () => {
     if (!tasks) return [];
     
     switch (currentTab) {
-      case 0: // All Tasks (for admin) or My Tasks (for user)
+      case 0: 
         if (user?.role === 'admin') {
           return tasks;
         } else {
           return tasks.filter(task => task.ownerId === user?.uid);
         }
-      case 1: // Assigned to Me
+      case 1:
         return tasks.filter(task => task.assignedTo === user?.uid);
-      case 2: // Created by Me (only for non-admin users)
-        return tasks.filter(task => task.ownerId === user?.uid);
+      case 2: 
+        if (user?.role === 'admin') {
+          return [];
+        } else {
+          return tasks.filter(task => task.ownerId === user?.uid);
+        }
       default:
         return tasks;
     }
@@ -54,10 +58,18 @@ const UserDashboard = () => {
         }
       };
       fetchAllTasks();
+      
       getUsers()
-        .then(setUsers)
+        .then(allUsers => {
+          if (user.role === 'admin') {
+            setUsers(allUsers);
+          } else {
+            setUsers(allUsers.filter(u => u.role !== 'admin'));
+          }
+        })
         .catch(err => {
           console.error('Failed to fetch users:', err);
+          setFetchError('Failed to load users. Please check your permissions.');
         });
     }
   }, [dispatch, user]); 
@@ -88,7 +100,6 @@ const UserDashboard = () => {
   const handleTaskCreated = async (taskData) => {
     try {
       await dispatch(createTask(taskData)).unwrap();
-      // Refresh tasks after creation
       if (user.role === 'admin') {
         dispatch(fetchTasks());
       } else {
@@ -103,7 +114,6 @@ const UserDashboard = () => {
   const handleTaskUpdated = async (taskId, taskData) => {
     try {
       await dispatch(editTask({ id: taskId, taskData })).unwrap();
-      // Refresh tasks after update
       if (user.role === 'admin') {
         dispatch(fetchTasks());
       } else {
@@ -118,7 +128,6 @@ const UserDashboard = () => {
   const handleTaskDeleted = async (taskId) => {
     try {
       await dispatch(removeTask(taskId)).unwrap();
-      // Refresh tasks after deletion
       if (user.role === 'admin') {
         dispatch(fetchTasks());
       } else {
@@ -139,6 +148,23 @@ const UserDashboard = () => {
   };
 
   const filteredTasks = getFilteredTasks();
+  const getTabLabels = () => {
+    if (user?.role === 'admin') {
+      return [
+        { label: "All Tasks", icon: null },
+        { label: "Assigned to Me", icon: null },
+        { label: "User Management", icon: <People /> }
+      ];
+    } else {
+      return [
+        { label: "My Tasks", icon: null },
+        { label: "Assigned to Me", icon: null },
+        { label: "Created by Me", icon: null }
+      ];
+    }
+  };
+
+  const tabLabels = getTabLabels();
 
   return (
     <AuthGuard>
@@ -172,87 +198,97 @@ const UserDashboard = () => {
             </Box>
           )}
           
-          <Grid container spacing={3} mb={4}>
-            <Grid item xs={12} sm={6} md={2}>
-              <Card>
-                <CardContent>
-                  <Typography color="textSecondary" gutterBottom>
-                    Total Tasks
-                  </Typography>
-                  <Typography variant="h5">{analytics.total || 0}</Typography>
-                </CardContent>
-              </Card>
+          {!(user?.role === 'admin' && currentTab === 2) && (
+            <Grid container spacing={3} mb={4}>
+              <Grid item xs={12} sm={6} md={2}>
+                <Card>
+                  <CardContent>
+                    <Typography color="textSecondary" gutterBottom>
+                      Total Tasks
+                    </Typography>
+                    <Typography variant="h5">{analytics.total || 0}</Typography>
+                  </CardContent>
+                </Card>
+              </Grid>
+              <Grid item xs={12} sm={6} md={2}>
+                <Card>
+                  <CardContent>
+                    <Typography color="textSecondary" gutterBottom>
+                      To Do
+                    </Typography>
+                    <Typography variant="h5">{analytics.todo || 0}</Typography>
+                  </CardContent>
+                </Card>
+              </Grid>
+              <Grid item xs={12} sm={6} md={2}>
+                <Card>
+                  <CardContent>
+                    <Typography color="textSecondary" gutterBottom>
+                      In Progress
+                    </Typography>
+                    <Typography variant="h5">{analytics.inProgress || 0}</Typography>
+                  </CardContent>
+                </Card>
+              </Grid>
+              <Grid item xs={12} sm={6} md={2}>
+                <Card>
+                  <CardContent>
+                    <Typography color="textSecondary" gutterBottom>
+                      Done
+                    </Typography>
+                    <Typography variant="h5">{analytics.done || 0}</Typography>
+                  </CardContent>
+                </Card>
+              </Grid>
+              <Grid item xs={12} sm={6} md={2}>
+                <Card>
+                  <CardContent>
+                    <Typography color="textSecondary" gutterBottom>
+                      Assigned to Me
+                    </Typography>
+                    <Typography variant="h5">{analytics.assignedToMe || 0}</Typography>
+                  </CardContent>
+                </Card>
+              </Grid>
+              <Grid item xs={12} sm={6} md={2}>
+                <Card>
+                  <CardContent>
+                    <Typography color="textSecondary" gutterBottom>
+                      Created by Me
+                    </Typography>
+                    <Typography variant="h5">{analytics.createdByMe || 0}</Typography>
+                  </CardContent>
+                </Card>
+              </Grid>
             </Grid>
-            <Grid item xs={12} sm={6} md={2}>
-              <Card>
-                <CardContent>
-                  <Typography color="textSecondary" gutterBottom>
-                    To Do
-                  </Typography>
-                  <Typography variant="h5">{analytics.todo || 0}</Typography>
-                </CardContent>
-              </Card>
-            </Grid>
-            <Grid item xs={12} sm={6} md={2}>
-              <Card>
-                <CardContent>
-                  <Typography color="textSecondary" gutterBottom>
-                    In Progress
-                  </Typography>
-                  <Typography variant="h5">{analytics.inProgress || 0}</Typography>
-                </CardContent>
-              </Card>
-            </Grid>
-            <Grid item xs={12} sm={6} md={2}>
-              <Card>
-                <CardContent>
-                  <Typography color="textSecondary" gutterBottom>
-                    Done
-                  </Typography>
-                  <Typography variant="h5">{analytics.done || 0}</Typography>
-                </CardContent>
-              </Card>
-            </Grid>
-            <Grid item xs={12} sm={6} md={2}>
-              <Card>
-                <CardContent>
-                  <Typography color="textSecondary" gutterBottom>
-                    Assigned to Me
-                  </Typography>
-                  <Typography variant="h5">{analytics.assignedToMe || 0}</Typography>
-                </CardContent>
-              </Card>
-            </Grid>
-            <Grid item xs={12} sm={6} md={2}>
-              <Card>
-                <CardContent>
-                  <Typography color="textSecondary" gutterBottom>
-                    Created by Me
-                  </Typography>
-                  <Typography variant="h5">{analytics.createdByMe || 0}</Typography>
-                </CardContent>
-              </Card>
-            </Grid>
-          </Grid>
+          )}
 
-          {/* Task Tabs */}
           <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
-            <Tabs value={currentTab} onChange={handleTabChange} aria-label="task tabs">
-              <Tab label={user?.role === 'admin' ? "All Tasks" : "My Tasks"} />
-              <Tab label="Assigned to Me" />
-              {user?.role !== 'admin' && <Tab label="Created by Me" />}
+            <Tabs value={currentTab} onChange={handleTabChange} aria-label="dashboard tabs">
+              {tabLabels.map((tab, index) => (
+                <Tab 
+                  key={index}
+                  label={tab.label} 
+                  icon={tab.icon}
+                  iconPosition="start"
+                />
+              ))}
             </Tabs>
           </Box>
         </Box>
 
-        <TaskList
-          tasks={filteredTasks}
-          users={users}
-          onTaskCreated={handleTaskCreated}
-          onTaskUpdated={handleTaskUpdated}
-          onTaskDeleted={handleTaskDeleted}
-          currentUser={user}
-        />
+        {user?.role === 'admin' && currentTab === 2 ? (
+          <UserList users={users} currentUser={user} />
+        ) : (
+          <TaskList
+            tasks={filteredTasks}
+            users={users}
+            onTaskCreated={handleTaskCreated}
+            onTaskUpdated={handleTaskUpdated}
+            onTaskDeleted={handleTaskDeleted}
+            currentUser={user}
+          />
+        )}
       </DashboardLayout>
     </AuthGuard>
   );
