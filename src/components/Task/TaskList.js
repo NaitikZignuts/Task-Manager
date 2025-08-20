@@ -157,7 +157,6 @@ const TaskList = ({ tasks, users, onTaskCreated, onTaskUpdated, onTaskDeleted, c
         columns={columns}
         pageSize={10}
         rowsPerPageOptions={[10]}
-        onRowClick={handleRowClick}
       />
 
       <Dialog
