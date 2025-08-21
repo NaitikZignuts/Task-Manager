@@ -126,17 +126,6 @@ const UserList = ({ users, currentUser }) => {
                           }
                         </Avatar>
                         <Box>
-                          <Typography variant="subtitle2">
-                            {user.displayName || 'No Name'}
-                            {user.uid === currentUser?.uid && (
-                              <Chip 
-                                label="You" 
-                                size="small" 
-                                color="secondary" 
-                                sx={{ ml: 1 }}
-                              />
-                            )}
-                          </Typography>
                           <Typography variant="caption" color="textSecondary">
                             ID: {user.uid.slice(-8)}...
                           </Typography>
@@ -202,9 +191,7 @@ const UserList = ({ users, currentUser }) => {
               }
             </Avatar>
             <Box>
-              <Typography variant="h6">
-                {selectedUser?.displayName || 'No Name'}
-              </Typography>
+              
               <Typography variant="caption" color="textSecondary">
                 User Details
               </Typography>

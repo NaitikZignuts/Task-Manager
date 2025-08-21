@@ -1,14 +1,15 @@
 import { useState, useEffect } from 'react';
 import { Controller, useForm } from 'react-hook-form';
-import { Button, Stack, Box, Alert } from '@mui/material';
+import { Button, Stack, Box, Alert, IconButton } from '@mui/material';
 import { DatePicker } from '@mui/x-date-pickers';
 import useAuth from '@/hooks/useAuth';
 import FormInput from '@/components/common/FormInput';
 import FormAutocomplete from '@/components/common/FormAutocomplete';
 import { statusOptions } from '../common/TaskOption';
-import { RequiredRules } from '../common/commonRules';
+import { RequiredRules, TitleRules } from '../common/commonRules';
+import CloseIcon from '@mui/icons-material/Close';
 
-const TaskForm = ({ task, onSubmit, users, error }) => {
+const TaskForm = ({ task, onSubmit, users, error, onClose }) => {
   const { user } = useAuth();
   const { control, handleSubmit, reset, formState: { errors }, watch } = useForm({
     mode: "all",
@@ -77,6 +78,18 @@ const TaskForm = ({ task, onSubmit, users, error }) => {
 
   return (
     <Box component="form" onSubmit={handleSubmit(handleFormSubmit)} sx={{ mt: 2 }}>
+      <IconButton
+        aria-label="close"
+        onClick={onClose}
+        sx={{
+          position: 'absolute',
+          right: 8,
+          top: 8,
+          color: (theme) => theme.palette.grey[500],
+        }}
+      >
+        <CloseIcon />
+      </IconButton>
       <Stack spacing={3}>
         {error && <Alert severity="error">{error}</Alert>}
 
@@ -85,13 +98,7 @@ const TaskForm = ({ task, onSubmit, users, error }) => {
           label="Title"
           control={control}
           errors={errors}
-          rules={{
-            required: 'Title is required',
-            minLength: {
-              value: 3,
-              message: 'Title must be at least 3 characters'
-            }
-          }}
+          rules={TitleRules}
           fullWidth
         />
 

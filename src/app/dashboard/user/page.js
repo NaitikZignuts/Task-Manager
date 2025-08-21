@@ -282,7 +282,7 @@ const UserDashboard = () => {
           )}
 
           {user?.role === 'admin' && (
-            <div className="flex justify-end mb-4">
+            <div className="flex justify-end mb-4 mt-2">
               <Button
                 variant="outlined"
                 startIcon={<Download />}

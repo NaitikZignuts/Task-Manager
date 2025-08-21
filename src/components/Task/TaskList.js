@@ -139,13 +139,12 @@ const TaskList = ({ tasks, users, onTaskCreated, onTaskUpdated, onTaskDeleted, c
           {paginatedTasks.map((task) => (
             <div
               key={task.id}
-              onClick={() => handleRowClick(task.id)}
               className="hover:bg-gray-50 cursor-pointer transition-colors duration-150"
             >
               <div className="block sm:hidden p-4">
                 <div className="flex justify-between items-start mb-2">
                   <Typography variant="subtitle1" className="font-medium text-gray-900 flex-1 mr-2">
-                    {task.title}
+                    Title :- {task.title}
                   </Typography>
                   <div className="flex items-center gap-1 ml-2">
                     <IconButton
@@ -172,17 +171,19 @@ const TaskList = ({ tasks, users, onTaskCreated, onTaskUpdated, onTaskDeleted, c
                   Description :- {task.description}
                 </Typography>
 
-                <div className="flex flex-wrap items-center gap-4 mt-3">
-                  <Chip
+                <div className="flex flex-wrap items-center gap-2 mt-3">
+                  Status :- <Chip
                     label={task.status}
                     color={statusColors[task.status]}
                     variant="outlined"
                     size="small"
                   />
-                  <Typography variant="caption" className="text-gray-500">
-                    Due: {formatDate(task.dueDate)}
-                  </Typography>
                 </div>
+                <div className='mt-2'>
+                <Typography variant="caption" className="text-gray-500">
+                    DueDate :- {formatDate(task.dueDate)}
+                  </Typography>
+                  </div>
               </div>
 
               <div className="hidden sm:grid sm:grid-cols-12 px-6 py-4 items-center">
@@ -262,10 +263,7 @@ const TaskList = ({ tasks, users, onTaskCreated, onTaskUpdated, onTaskDeleted, c
 
       <Dialog
         open={open}
-        onClose={(e) => {
-          e.stopPropagation();
-          setOpen(false);
-        }}
+        onClose={() => setOpen(false)}
         maxWidth="md"
         fullWidth
       >
@@ -281,6 +279,7 @@ const TaskList = ({ tasks, users, onTaskCreated, onTaskUpdated, onTaskDeleted, c
             onSubmit={handleSubmit}
             users={users}
             error={formError}
+            onClose={() => setOpen(false)}
           />
         </DialogContent>
       </Dialog>
