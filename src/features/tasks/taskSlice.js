@@ -1,88 +1,29 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import { 
-  collection, 
-  doc, 
-  addDoc, 
-  updateDoc, 
-  deleteDoc, 
-  getDocs, 
-  getDoc,
-  query, 
-  where, 
-  limit
-} from 'firebase/firestore';
-import { db } from '../../config/firebase';
+
+const API_BASE_URL = '/api';
 
 export const fetchTasks = createAsyncThunk(
   'tasks/fetchTasks',
   async (userId = null, { rejectWithValue }) => {
     try {
-      const tasksRef = collection(db, 'tasks');
-      
-      if (userId) {
-        const ownedTasksQuery = query(
-          tasksRef, 
-          where('ownerId', '==', userId),
-          limit(50)
-        );
-        const assignedTasksQuery = query(
-          tasksRef, 
-          where('assignedTo', '==', userId),
-          limit(50)
-        );
-        
-        const [ownedSnapshot, assignedSnapshot] = await Promise.all([
-          getDocs(ownedTasksQuery),
-          getDocs(assignedTasksQuery)
-        ]);
-        
-        const tasks = [];
-        const taskIds = new Set();
-        
-        ownedSnapshot.forEach((doc) => {
-          const data = doc.data();
-          tasks.push({
-            id: doc.id,
-            ...data,
-            createdAt: data.createdAt?.toDate?.()?.toISOString() || new Date().toISOString(),
-            dueDate: data.dueDate?.toDate?.()?.toISOString() || new Date().toISOString(),
-            updatedAt: data.updatedAt?.toDate?.()?.toISOString() || new Date().toISOString(),
-          });
-          taskIds.add(doc.id);
-        });
-        
-        assignedSnapshot.forEach((doc) => {
-          if (!taskIds.has(doc.id)) {
-            const data = doc.data();
-            tasks.push({
-              id: doc.id,
-              ...data,
-              createdAt: data.createdAt?.toDate?.()?.toISOString() || new Date().toISOString(),
-              dueDate: data.dueDate?.toDate?.()?.toISOString() || new Date().toISOString(),
-              updatedAt: data.updatedAt?.toDate?.()?.toISOString() || new Date().toISOString(),
-            });
-          }
-        });
-        
-        return tasks;
-      } else {
-        const adminQuery = query(tasksRef, limit(50));
-        const querySnapshot = await getDocs(adminQuery);
-        const tasks = [];
-        
-        querySnapshot.forEach((doc) => {
-          const data = doc.data();
-          tasks.push({
-            id: doc.id,
-            ...data,
-            createdAt: data.createdAt?.toDate?.()?.toISOString() || new Date().toISOString(),
-            dueDate: data.dueDate?.toDate?.()?.toISOString() || new Date().toISOString(),
-            updatedAt: data.updatedAt?.toDate?.()?.toISOString() || new Date().toISOString(),
-          });
-        });
+      const url = userId ?
+        `${API_BASE_URL}/tasks?userId=${encodeURIComponent(userId)}` :
+        `${API_BASE_URL}/tasks`;
 
-        return tasks;
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to fetch tasks');
       }
+
+      const data = await response.json();
+      return data.tasks;
     } catch (error) {
       console.error('Error fetching tasks:', error);
       return rejectWithValue(error.message);
@@ -94,26 +35,21 @@ export const createTask = createAsyncThunk(
   'tasks/createTask',
   async (taskData, { rejectWithValue }) => {
     try {
-      const tasksRef = collection(db, 'tasks');
-      
-      const dueDate = taskData.dueDate ? 
-        (typeof taskData.dueDate === 'string' ? new Date(taskData.dueDate) : taskData.dueDate) : 
-        new Date();
-      
-      const docRef = await addDoc(tasksRef, {
-        ...taskData,
-        dueDate: dueDate,
-        createdAt: new Date(),
-        updatedAt: new Date(),
+      const response = await fetch(`${API_BASE_URL}/tasks/create`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(taskData),
       });
-      
-      return {
-        id: docRef.id,
-        ...taskData,
-        dueDate: dueDate.toISOString(),
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      };
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to create task');
+      }
+
+      const data = await response.json();
+      return data.task;
     } catch (error) {
       console.error('Error creating task:', error);
       return rejectWithValue(error.message);
@@ -125,24 +61,21 @@ export const editTask = createAsyncThunk(
   'tasks/editTask',
   async ({ id, taskData }, { rejectWithValue }) => {
     try {
-      const taskRef = doc(db, 'tasks', id);
-      
-      const dueDate = taskData.dueDate ? 
-        (typeof taskData.dueDate === 'string' ? new Date(taskData.dueDate) : taskData.dueDate) : 
-        new Date();
-      
-      await updateDoc(taskRef, {
-        ...taskData,
-        dueDate: dueDate,
-        updatedAt: new Date(),
+      const response = await fetch(`${API_BASE_URL}/tasks/${id}`, {
+        method: 'PUT', 
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(taskData),
       });
-      
-      return {
-        id,
-        ...taskData,
-        dueDate: dueDate.toISOString(),
-        updatedAt: new Date().toISOString(),
-      };
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to update task');
+      }
+
+      const data = await response.json();
+      return data.task;
     } catch (error) {
       console.error('Error updating task:', error);
       return rejectWithValue(error.message);
@@ -154,11 +87,47 @@ export const removeTask = createAsyncThunk(
   'tasks/removeTask',
   async (taskId, { rejectWithValue }) => {
     try {
-      const taskRef = doc(db, 'tasks', taskId);
-      await deleteDoc(taskRef);
+      const response = await fetch(`${API_BASE_URL}/tasks/${taskId}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to delete task');
+      }
+
       return taskId;
     } catch (error) {
       console.error('Error deleting task:', error);
+      return rejectWithValue(error.message);
+    }
+  }
+);
+
+export const patchTask = createAsyncThunk(
+  'tasks/patchTask',
+  async ({ id, taskData }, { rejectWithValue }) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/tasks/${id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(taskData),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to patch task');
+      }
+
+      const data = await response.json();
+      return data.task;
+    } catch (error) {
+      console.error('Error patching task:', error);
       return rejectWithValue(error.message);
     }
   }
@@ -197,6 +166,7 @@ const taskSlice = createSlice({
         state.status = 'failed';
         state.error = action.payload;
       })
+
       .addCase(createTask.pending, (state) => {
         state.status = 'loading';
       })
@@ -208,6 +178,7 @@ const taskSlice = createSlice({
         state.status = 'failed';
         state.error = action.payload;
       })
+
       .addCase(editTask.pending, (state) => {
         state.status = 'loading';
       })
@@ -222,6 +193,22 @@ const taskSlice = createSlice({
         state.status = 'failed';
         state.error = action.payload;
       })
+
+      .addCase(patchTask.pending, (state) => {
+        state.status = 'loading';
+      })
+      .addCase(patchTask.fulfilled, (state, action) => {
+        state.status = 'succeeded';
+        const index = state.tasks.findIndex(task => task.id === action.payload.id);
+        if (index !== -1) {
+          state.tasks[index] = { ...state.tasks[index], ...action.payload };
+        }
+      })
+      .addCase(patchTask.rejected, (state, action) => {
+        state.status = 'failed';
+        state.error = action.payload;
+      })
+
       .addCase(removeTask.pending, (state) => {
         state.status = 'loading';
       })
