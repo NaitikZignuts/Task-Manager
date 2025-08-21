@@ -1,7 +1,6 @@
 "use client"
 import { useState } from 'react';
 import { CssBaseline, Toolbar, useTheme, useMediaQuery } from '@mui/material';
-import Sidebar from './Sidebar';
 import Header from './Header';
 
 const DashboardLayout = ({ children }) => {
@@ -17,7 +16,6 @@ const DashboardLayout = ({ children }) => {
     <div className="flex min-h-screen bg-gray-50">
       <CssBaseline />
       <Header onDrawerToggle={handleDrawerToggle} />
-      {/* <Sidebar open={mobileOpen} onClose={handleDrawerToggle} /> */}
       <main className="flex-1 w-full overflow-auto">
         <Toolbar />
         <div className="p-3 sm:p-4 lg:p-6 max-w-full">

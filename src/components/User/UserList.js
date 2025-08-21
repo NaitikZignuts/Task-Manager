@@ -175,7 +175,6 @@ const UserList = ({ users, currentUser }) => {
         </CardContent>
       </Card>
 
-      {/* User Details Dialog */}
       <Dialog 
         open={detailsOpen} 
         onClose={handleCloseDetails}

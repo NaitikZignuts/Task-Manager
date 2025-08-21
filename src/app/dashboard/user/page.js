@@ -359,7 +359,6 @@ const UserDashboard = () => {
                 </Card>
               </div>
 
-              {/* Analytics Charts */}
               {user?.role === 'admin' && (
                 <Card className="mb-8 shadow-sm">
                   <CardContent className="p-6">
@@ -428,7 +427,6 @@ const UserDashboard = () => {
                 </Card>
               )}
 
-              {/* Search and Filters */}
               <Card className="mb-6 shadow-sm">
                 <CardContent className="p-4">
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

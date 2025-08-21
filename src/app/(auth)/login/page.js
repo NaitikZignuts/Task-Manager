@@ -38,7 +38,6 @@ const LoginPage = () => {
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 px-4 py-12 sm:px-6 lg:px-8">
         <div className="w-full max-w-sm sm:max-w-md">
           <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-6 sm:p-8">
-            {/* Header */}
             <div className="text-center mb-8">
               
             <div className="mx-auto w-12 h-12 bg-gradient-to-r from-blue-500 to-blue-600 rounded-full flex items-center justify-center mb-4">
@@ -55,7 +54,6 @@ const LoginPage = () => {
             </div>
 
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-              {/* Error Message */}
               {error && (
                 <div className="bg-red-50 border border-red-200 rounded-xl p-4">
                   <div className="flex">
@@ -70,7 +68,6 @@ const LoginPage = () => {
               )}
 
               <Stack spacing={4}>
-                {/* Email Input */}
                 <div className="space-y-2">
                   <FormInput
                     name="email"
@@ -84,7 +81,6 @@ const LoginPage = () => {
                   />
                 </div>
 
-                {/* Password Input */}
                 <div className="space-y-2">
                   <FormInput
                     name="password"
@@ -98,7 +94,6 @@ const LoginPage = () => {
                   />
                 </div>
 
-                {/* Remember Me & Forgot Password */}
                 <div className="flex items-center justify-between text-sm">
                   <div className="flex items-center">
                     <input
@@ -113,7 +108,6 @@ const LoginPage = () => {
                   </div>
                 </div>
 
-                {/* Login Button */}
                 <Button
                   type="submit"
                   variant="contained"
@@ -133,7 +127,6 @@ const LoginPage = () => {
               </Stack>
             </form>
 
-            {/* Register Link */}
             <div className="mt-8 text-center">
               <Typography variant="body2" className="text-gray-600">
                 Dont have an account?{' '}

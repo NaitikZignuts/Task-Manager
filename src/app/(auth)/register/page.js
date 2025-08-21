@@ -47,7 +47,6 @@ const RegisterPage = () => {
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-emerald-50 via-teal-50 to-blue-50 px-4 py-12 sm:px-6 lg:px-8">
         <div className="w-full max-w-sm sm:max-w-md">
           <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-6 sm:p-8">
-            {/* Header */}
             <div className="text-center mb-8">
               <div className="mx-auto w-12 h-12 bg-gradient-to-r from-emerald-500 to-teal-600 rounded-full flex items-center justify-center mb-4">
                 <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -63,7 +62,6 @@ const RegisterPage = () => {
             </div>
 
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-              {/* Error Message */}
               {error && (
                 <div className="bg-red-50 border border-red-200 rounded-xl p-4">
                   <div className="flex">
@@ -78,7 +76,6 @@ const RegisterPage = () => {
               )}
 
               <Stack spacing={4}>
-                {/* Email Input */}
                 <div className="space-y-2">
                   <FormInput
                     name="email"
@@ -92,7 +89,6 @@ const RegisterPage = () => {
                   />
                 </div>
 
-                {/* Password Input */}
                 <div className="space-y-2">
                   <FormInput
                     name="password"
@@ -112,7 +108,6 @@ const RegisterPage = () => {
                   />
                 </div>
 
-                {/* Confirm Password Input */}
                 <div className="space-y-2">
                   <FormInput
                     name="confirmPassword"
@@ -129,7 +124,6 @@ const RegisterPage = () => {
                   />
                 </div>
 
-                {/* Register Button */}
                 <Button
                   type="submit"
                   variant="contained"
@@ -149,7 +143,6 @@ const RegisterPage = () => {
               </Stack>
             </form>
 
-            {/* Login Link */}
             <div className="mt-8 text-center">
               <Typography variant="body2" className="text-gray-600">
                 Already have an account?{' '}
