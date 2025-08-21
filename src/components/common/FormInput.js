@@ -47,7 +47,6 @@ function FormInput({
 }) {
   const isRequired = requiredFlag || false
 
-  // If control is provided (react-hook-form)
   if (control) {
     return (
       <Box sx={{ width: '100%' }}>
@@ -55,7 +54,7 @@ function FormInput({
           name={name}
           control={control}
           rules={rules}
-          defaultValue="" // Add default value to prevent undefined
+          defaultValue="" 
           render={({ field: { onChange, value, ref } }) => (
             <>
               <TextField
@@ -71,7 +70,7 @@ function FormInput({
                 label={label}
                 autoComplete='off'
                 error={Boolean(errors?.[name])}
-                value={value || ''} // Ensure value is never undefined
+                value={value || ''} 
                 inputProps={inputProps}
                 onChange={(val) => {
                   const inputValue = val.target.value
@@ -126,7 +125,6 @@ function FormInput({
     )
   }
 
-  // If no control (regular input)
   return (
     <Box sx={{ width: '100%' }}>
       <TextField
@@ -141,7 +139,7 @@ function FormInput({
         label={label}
         autoComplete='off'
         error={Boolean(errors?.[name])}
-        value={value || ''} // Ensure value is never undefined
+        value={value || ''} 
         inputProps={inputProps}
         onChange={onChange}
         onBlur={(val) => {

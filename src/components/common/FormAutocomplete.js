@@ -23,18 +23,15 @@ const FormAutocomplete = (props) => {
     watch
   } = props;
 
-  // Safe getOptionLabel function that handles undefined values
   const getOptionLabel = (option) => {
     if (!option) return '';
     if (typeof option === 'string') {
-      // If option is a string, try to find it in the options array
       const foundOption = options.find(opt => opt.value === option);
       return foundOption ? foundOption.label : option;
     }
     return option.label || '';
   };
 
-  // Function to find the option object from a value
   const findOptionFromValue = (value) => {
     if (!value) return null;
     if (typeof value === 'object' && value !== null) return value;
@@ -92,7 +89,6 @@ const FormAutocomplete = (props) => {
               if (onChangeHandler) {
                 onChangeHandler(newValue);
               }
-              // Store only the value (not the whole object) if it's an object with value property
               if (newValue && typeof newValue === 'object' && 'value' in newValue) {
                 field.onChange(newValue.value);
               } else {

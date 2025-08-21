@@ -21,7 +21,6 @@ const useAuth = () => {
       } catch (err) {
         dispatch(setError(err.message));
       } finally {
-        // Always set loading to false after auth state is determined
         dispatch(setLoading(false));
       }
     });
