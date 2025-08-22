@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react';
 import { Controller, useForm } from 'react-hook-form';
-import { Button, Stack, Box, Alert, IconButton } from '@mui/material';
+import { Button, Stack, Box, Alert, IconButton, Typography } from '@mui/material';
 import { DatePicker } from '@mui/x-date-pickers';
 import useAuth from '@/hooks/useAuth';
 import FormInput from '@/components/common/FormInput';
 import FormAutocomplete from '@/components/common/FormAutocomplete';
 import { statusOptions } from '../common/TaskOption';
-import { DescriptionRules, RequiredRules, TitleRules } from '../common/commonRules';
+import { DescriptionRules, DueDateRules, RequiredRules, TitleRules } from '../common/commonRules';
 import CloseIcon from '@mui/icons-material/Close';
 
 const TaskForm = ({ task, onSubmit, users, error, onClose }) => {
@@ -135,10 +135,7 @@ const TaskForm = ({ task, onSubmit, users, error, onClose }) => {
         <Controller
           name="dueDate"
           control={control}
-          rules={{
-            required: 'Due date is required',
-            validate: validateDueDate
-          }}
+          rules={DueDateRules}
           render={({ field }) => (
             <DatePicker
               label="Due Date"
@@ -162,6 +159,15 @@ const TaskForm = ({ task, onSubmit, users, error, onClose }) => {
             />
           )}
         />
+        {errors.dueDate && (
+          <Typography
+            variant="caption"
+            color="error"
+            sx={{ marginTop:'0px !important' }}
+          >
+            {errors.dueDate.message}
+          </Typography>
+        )}
 
         <FormAutocomplete
           name="assignedTo"

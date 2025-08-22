@@ -212,7 +212,7 @@ const UserDashboard = () => {
   };
 
   const handleExport = () => {
-    exportTasksToCSV(tasks, users);
+    exportTasksToCSV(allTasks, users);
   };
 
   const handleTabChange = (event, newValue) => {

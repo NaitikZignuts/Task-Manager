@@ -55,3 +55,30 @@ export const DescriptionRules = {
     }
   }
 }
+
+export const DueDateRules = {
+  required: {
+    value: true,
+    message: 'Due date is required'
+  },
+  validate: {
+    notInPast: (value) => {
+      if (!value) return 'Due date is required';
+
+      const selectedDate = new Date(value);
+      if (isNaN(selectedDate.getTime())) {
+        return 'Invalid date format';
+      }
+
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      if (selectedDate < today) {
+        return 'Due date must be in the future - past dates are not allowed';
+      }
+
+      return true;
+    }
+  }
+};
+
