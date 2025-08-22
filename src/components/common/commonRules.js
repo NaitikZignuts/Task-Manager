@@ -51,9 +51,6 @@ export const DescriptionRules = {
       if (!value || value.trim().length === 0) {
         return 'Description cannot be empty or contain only spaces';
       }
-      if (value.trim().length < 5) {
-        return 'Description must be at least 5 non-whitespace characters';
-      }
       return true;
     }
   }

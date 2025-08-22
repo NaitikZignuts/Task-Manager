@@ -41,6 +41,6 @@ A full-stack Task Manager built with Next.js, Firebase, Redux Toolkit, and Mater
 
 ## Screenshots
 
-![Login Page](/public/images/screenshots/login.png)
-![Dashboard](/public/images/screenshots/dashboard.png)
-![Task Management](/public/images/screenshots/tasks.png)
+![Login Page](/public/LoginPage.png)
+![Dashboard](/public/Dashboard.png)
+![Register Page](/public/RegisterPage.png)

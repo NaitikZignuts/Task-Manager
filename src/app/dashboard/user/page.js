@@ -44,6 +44,7 @@ const UserDashboard = () => {
   const [currentTab, setCurrentTab] = useState(0);
   const [chartType, setChartType] = useState('bar');
   const [currentPage, setCurrentPage] = useState(1);
+  const [allTasks, setAllTasks] = useState([]);
   const [pageSize] = useState(10);
 
   const { control, watch } = useForm({
@@ -125,15 +126,15 @@ const UserDashboard = () => {
   }, [dispatch, user, searchTerm, statusFilter, dateFilter, currentPage]);
 
   useEffect(() => {
-    const allUserTasks = user?.role === 'admin' ? tasks : tasks;
-    if (allUserTasks.length > 0) {
+    const analyticsTasksToUse = user?.role === 'admin' ? allTasks : allTasks;
+    if (analyticsTasksToUse.length > 0) {
       const analyticsData = {
-        total: allUserTasks.length,
-        todo: allUserTasks.filter(task => task.status === 'todo').length,
-        inProgress: allUserTasks.filter(task => task.status === 'in-progress').length,
-        done: allUserTasks.filter(task => task.status === 'done').length,
-        assignedToMe: allUserTasks.filter(task => task.assignedTo === user?.uid).length,
-        createdByMe: allUserTasks.filter(task => task.ownerId === user?.uid).length,
+        total: analyticsTasksToUse.length,
+        todo: analyticsTasksToUse.filter(task => task.status === 'todo').length,
+        inProgress: analyticsTasksToUse.filter(task => task.status === 'in-progress').length,
+        done: analyticsTasksToUse.filter(task => task.status === 'done').length,
+        assignedToMe: analyticsTasksToUse.filter(task => task.assignedTo === user?.uid).length,
+        createdByMe: analyticsTasksToUse.filter(task => task.ownerId === user?.uid).length,
       };
       setAnalytics(analyticsData);
     } else {
@@ -146,7 +147,36 @@ const UserDashboard = () => {
         createdByMe: 0,
       });
     }
-  }, [tasks, user?.uid]);
+  }, [allTasks, user?.uid]);
+
+  const fetchAllTasksForAnalytics = async () => {
+    try {
+      const params = {
+        searchTerm: '',
+        statusFilter: 'all', 
+        dateFilter: 'all',
+        page: 1,
+        pageSize: 1000
+      };
+  
+      let analyticsTasksResponse;
+      if (user.role === 'admin') {
+        analyticsTasksResponse = await dispatch(fetchTasks(params)).unwrap();
+      } else {
+        analyticsTasksResponse = await dispatch(fetchTasks({ ...params, userId: user.uid })).unwrap();
+      }
+      
+      setAllTasks(analyticsTasksResponse.tasks || []);
+    } catch (err) {
+      console.error('Failed to fetch tasks for analytics:', err);
+    }
+  };
+
+  useEffect(() => {
+    if (user?.uid) {
+      fetchAllTasksForAnalytics();
+    }
+  }, [dispatch, user?.uid]);
 
   const handleTaskCreated = async (taskData) => {
     try {
@@ -206,9 +236,9 @@ const UserDashboard = () => {
   const tabLabels = getTabLabels();
 
   const chartData = [
-    { name: 'To Do', value: analytics.todo || 0 },
-    { name: 'In Progress', value: analytics.inProgress || 0 },
-    { name: 'Done', value: analytics.done || 0 },
+    { name: 'To Do', value: allTasks.filter(task => task.status === 'todo').length || 0 },
+    { name: 'In Progress', value: allTasks.filter(task => task.status === 'in-progress').length || 0 },
+    { name: 'Done', value: allTasks.filter(task => task.status === 'done').length || 0 },
   ];
 
   return (

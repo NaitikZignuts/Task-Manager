@@ -134,7 +134,12 @@ const UserList = ({ users, currentUser }) => {
                       {user.email || 'No email'}
                     </Typography>
                   </div>
-                  
+                  <div className="flex items-center gap-2 ml-2">
+                    <CalendarToday fontSize="small" className="text-gray-400" />
+                    <Typography variant="body2" className="text-gray-700">
+                      {formatDate(user.createdAt)}
+                    </Typography>
+                  </div>
                   <div className="flex items-center gap-2 ml-2 mt-2">
                     <Chip
                       icon={getRoleIcon(user.role)}
@@ -143,13 +148,6 @@ const UserList = ({ users, currentUser }) => {
                       size="small"
                       variant="outlined"
                     />
-                  </div>
-                  
-                  <div className="flex items-center gap-2 ml-2">
-                    <CalendarToday fontSize="small" className="text-gray-400" />
-                    <Typography variant="body2" className="text-gray-700">
-                      {formatDate(user.createdAt)}
-                    </Typography>
                   </div>
                 </div>
               </div>
