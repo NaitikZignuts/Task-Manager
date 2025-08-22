@@ -9,9 +9,11 @@ import GuestGuard from '../../../components/GuestGuard'
 import { useForm } from 'react-hook-form';
 import FormInput from '@/components/common/FormInput';
 import { RequiredRules } from '@/components/common/commonRules';
+import toast from 'react-hot-toast';
 
 const LoginPage = () => {
   const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
   const dispatch = useDispatch();
   
@@ -25,11 +27,22 @@ const LoginPage = () => {
 
   const onSubmit = async (data) => {
     try {
+      setIsLoading(true); 
+      setError('');
+      
       const user = await loginUser(data.email, data.password);
       dispatch(setUser(user));
+      
+      toast.success('Login successful! Welcome back!', {
+        duration: 4000,
+        position: 'top-center',
+      });
+      
       router.push('/dashboard/user');
     } catch (err) {
-      setError(err.message);
+      toast.error('Login failed. Please check your credentials.'); 
+    } finally {
+      setIsLoading(false); 
     }
   };
 
@@ -112,6 +125,7 @@ const LoginPage = () => {
                   type="submit"
                   variant="contained"
                   size="large"
+                  disabled={isLoading}
                   className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-200"
                   sx={{
                     textTransform: 'none',
@@ -122,14 +136,14 @@ const LoginPage = () => {
                     }
                   }}
                 >
-                  Sign In
+                  {isLoading ? 'Signing In...' : 'Sign In'}
                 </Button>
               </Stack>
             </form>
 
             <div className="mt-8 text-center">
               <Typography variant="body2" className="text-gray-600">
-                Dont have an account?{' '}
+              Don&#39;t have an account?{' '}
                 <Link 
                   href="/register" 
                   className="text-blue-600 hover:text-blue-500 font-semibold transition-colors duration-200"

@@ -6,6 +6,7 @@ import { Dialog, DialogTitle, DialogContent } from '@mui/material';
 import { useRouter } from 'next/navigation';
 import ConfirmationDialog from '../ConfirmationDialog';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
+import toast from 'react-hot-toast';
 
 const statusColors = {
   todo: 'default',
@@ -56,11 +57,17 @@ const TaskList = ({ tasks, users, onTaskCreated, onTaskUpdated, onTaskDeleted, c
     if (taskToDelete) {
       try {
         await onTaskDeleted(taskToDelete.id);
+        toast.success('Task deleted successfully!', {
+          duration: 4000,
+          position: 'top-center',
+        });
         setConfirmOpen(false);
         setTaskToDelete(null);
       } catch (err) {
         console.error('Failed to delete task:', err);
-        setFormError('Failed to delete task. Please check your permissions.');
+        const errorMsg = 'Failed to delete task. Please check your permissions.';
+        setFormError(errorMsg);
+        toast.error(errorMsg);
       }
     }
   };
@@ -72,14 +79,24 @@ const TaskList = ({ tasks, users, onTaskCreated, onTaskUpdated, onTaskDeleted, c
     try {
       if (selectedTask) {
         await onTaskUpdated(selectedTask.id, taskData);
+        toast.success('Task updated successfully!', {
+          duration: 4000,
+          position: 'top-center',
+        });
       } else {
         await onTaskCreated(taskData);
+        toast.success('Task created successfully!', {
+          duration: 4000,
+          position: 'top-center',
+        });
       }
       setOpen(false);
       setFormError('');
     } catch (err) {
       console.error('Failed to save task:', err);
-      setFormError('Failed to save task. Please check your permissions.');
+      const errorMsg = 'Failed to save task. Please check your permissions.';
+      setFormError(errorMsg);
+      toast.error(errorMsg);
     }
   };
 

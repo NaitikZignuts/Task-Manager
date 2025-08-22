@@ -8,10 +8,12 @@ import { setUser } from '../../../features/auth/authSlice';
 import GuestGuard from '@/components/GuestGuard';
 import { useForm } from 'react-hook-form';
 import FormInput from '@/components/common/FormInput';
-import { RequiredRules } from '@/components/common/commonRules';
+import { EmailRules, PasswordRules, RequiredRules } from '@/components/common/commonRules';
+import toast from 'react-hot-toast';
 
 const RegisterPage = () => {
   const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
   const dispatch = useDispatch();
   
@@ -34,21 +36,29 @@ const RegisterPage = () => {
 
   const onSubmit = async (data) => {
     try {
+      setIsLoading(true); 
       const user = await registerUser(data.email, data.password);
       dispatch(setUser(user));
+      toast.success('Registration successful! Welcome aboard!', {
+        duration: 4000,
+        position: 'top-center',
+      });
+      
       router.push('/dashboard/user');
     } catch (err) {
-      setError(err.message);
+      toast.error('Registration failed. Please try again.'); 
+    } finally {
+      setIsLoading(false); 
     }
   };
 
   return (
     <GuestGuard>
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-emerald-50 via-teal-50 to-blue-50 px-4 py-12 sm:px-6 lg:px-8">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 px-4 py-12 sm:px-6 lg:px-8">
         <div className="w-full max-w-sm sm:max-w-md">
           <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-6 sm:p-8">
             <div className="text-center mb-8">
-              <div className="mx-auto w-12 h-12 bg-gradient-to-r from-emerald-500 to-teal-600 rounded-full flex items-center justify-center mb-4">
+              <div className="mx-auto w-12 h-12 bg-gradient-to-r from-blue-500 to-blue-500 rounded-full flex items-center justify-center mb-4">
                 <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
                 </svg>
@@ -84,7 +94,7 @@ const RegisterPage = () => {
                     label="Email Address"
                     control={control}
                     errors={errors}
-                    rules={RequiredRules}
+                    rules={EmailRules}
                     fullWidth
                   />
                 </div>
@@ -97,13 +107,7 @@ const RegisterPage = () => {
                     label="Password"
                     control={control}
                     errors={errors}
-                    rules={{
-                      required: 'Password is required',
-                      minLength: {
-                        value: 6,
-                        message: 'Password must be at least 6 characters'
-                      }
-                    }}
+                    rules={PasswordRules}
                     fullWidth
                   />
                 </div>
@@ -128,17 +132,18 @@ const RegisterPage = () => {
                   type="submit"
                   variant="contained"
                   size="large"
-                  className="w-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-200"
+                  disabled={isLoading}
+                  className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-200"
                   sx={{
                     textTransform: 'none',
                     fontSize: '1rem',
-                    background: 'linear-gradient(135deg, #059669 0%, #0d9488 100%)',
+                    background: 'linear-gradient(135deg, #3b82f6 0%, #6366f1 100%)',
                     '&:hover': {
-                      background: 'linear-gradient(135deg, #047857 0%, #0f766e 100%)',
+                      background: 'linear-gradient(135deg, #2563eb 0%, #4f46e5 100%)',
                     }
                   }}
                 >
-                  Create Account
+                  {isLoading ? 'Creating Account...' : 'Create Account'}
                 </Button>
               </Stack>
             </form>
@@ -148,7 +153,7 @@ const RegisterPage = () => {
                 Already have an account?{' '}
                 <Link 
                   href="/login" 
-                  className="text-emerald-600 hover:text-emerald-500 font-semibold transition-colors duration-200"
+                  className="text-blue-600 hover:text-blue-500 font-semibold transition-colors duration-200"
                 >
                   Sign in here
                 </Link>

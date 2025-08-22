@@ -1,16 +1,8 @@
 import { useState } from 'react';
 import {
-  Box,
   Card,
   CardContent,
   Typography,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Paper,
   Chip,
   Avatar,
   IconButton,
@@ -20,7 +12,13 @@ import {
   DialogContent,
   DialogActions,
   Button,
-  Stack
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Paper
 } from '@mui/material';
 import { 
   Person, 
@@ -69,12 +67,12 @@ const UserList = ({ users, currentUser }) => {
 
   if (!users || users.length === 0) {
     return (
-      <Card>
-        <CardContent>
-          <Typography variant="h6" gutterBottom>
+      <Card className="w-full shadow-md">
+        <CardContent className="p-4 md:p-6">
+          <Typography variant="h6" className="font-semibold mb-2">
             User Management
           </Typography>
-          <Typography color="textSecondary">
+          <Typography className="text-gray-500">
             No users found.
           </Typography>
         </CardContent>
@@ -83,11 +81,11 @@ const UserList = ({ users, currentUser }) => {
   }
 
   return (
-    <Box>
-      <Card>
-        <CardContent>
-          <Stack direction="row" justifyContent="space-between" alignItems="center" mb={3}>
-            <Typography variant="h6">
+    <div className="w-full">
+      <Card className="w-full shadow-md">
+        <CardContent className="p-4 md:p-6">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-2">
+            <Typography variant="h6" className="font-semibold">
               User Management ({users.length} users)
             </Typography>
             <Chip 
@@ -95,83 +93,143 @@ const UserList = ({ users, currentUser }) => {
               label="Admin View" 
               color="error" 
               variant="outlined" 
+              className="self-start md:self-center"
             />
-          </Stack>
+          </div>
 
-          <TableContainer component={Paper} variant="outlined">
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell>User</TableCell>
-                  <TableCell>Email</TableCell>
-                  <TableCell>Role</TableCell>
-                  <TableCell>Joined</TableCell>
-                  <TableCell align="center">Actions</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {users.map((user) => (
-                  <TableRow 
-                    key={user.uid}
-                    sx={{ 
-                      backgroundColor: user.uid === currentUser?.uid ? 'action.hover' : 'inherit'
-                    }}
-                  >
-                    <TableCell>
-                      <Stack direction="row" spacing={2} alignItems="center">
-                        <Avatar sx={{ width: 32, height: 32 }}>
-                          {user.displayName 
-                            ? user.displayName.charAt(0).toUpperCase()
-                            : user.email?.charAt(0).toUpperCase() || 'U'
-                          }
-                        </Avatar>
-                        <Box>
-                          <Typography variant="caption" color="textSecondary">
-                            ID: {user.uid.slice(-8)}...
-                          </Typography>
-                        </Box>
-                      </Stack>
-                    </TableCell>
-                    <TableCell>
-                      <Stack direction="row" spacing={1} alignItems="center">
-                        <Email fontSize="small" color="action" />
-                        <Typography variant="body2">
-                          {user.email || 'No email'}
-                        </Typography>
-                      </Stack>
-                    </TableCell>
-                    <TableCell>
-                      <Chip
-                        icon={getRoleIcon(user.role)}
-                        label={user.role?.toUpperCase() || 'USER'}
-                        color={getRoleColor(user.role)}
-                        size="small"
-                        variant="outlined"
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <Stack direction="row" spacing={1} alignItems="center">
-                        <CalendarToday fontSize="small" color="action" />
-                        <Typography variant="body2">
-                          {formatDate(user.createdAt)}
-                        </Typography>
-                      </Stack>
-                    </TableCell>
-                    <TableCell align="center">
-                      <Tooltip title="View Details">
-                        <IconButton 
-                          size="small"
-                          onClick={() => handleViewDetails(user)}
-                        >
-                          <Info />
-                        </IconButton>
-                      </Tooltip>
-                    </TableCell>
+          <div className="block md:hidden space-y-4">
+            {users.map((user) => (
+              <div 
+                key={user.uid}
+                className={`p-4 rounded-lg border ${user.uid === currentUser?.uid ? 'bg-blue-50 border-blue-200' : 'bg-white border-gray-200'}`}
+              >
+                <div className="flex justify-between items-start mb-3">
+                  <div className="flex items-center gap-3">
+                    <Avatar className="w-10 h-10">
+                      {user.displayName 
+                        ? user.displayName.charAt(0).toUpperCase()
+                        : user.email?.charAt(0).toUpperCase() || 'U'
+                      }
+                    </Avatar>
+                    <div>
+                      <Typography variant="caption" className="text-gray-500">
+                        ID: {user.uid.slice(-8)}...
+                      </Typography>
+                    </div>
+                  </div>
+                  <Tooltip title="View Details">
+                    <IconButton 
+                      size="small"
+                      onClick={() => handleViewDetails(user)}
+                    >
+                      <Info />
+                    </IconButton>
+                  </Tooltip>
+                </div>
+                
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 ml-2">
+                    <Email fontSize="small" className="text-gray-400" />
+                    <Typography variant="body2" className="text-gray-700">
+                      {user.email || 'No email'}
+                    </Typography>
+                  </div>
+                  
+                  <div className="flex items-center gap-2 ml-2 mt-2">
+                    <Chip
+                      icon={getRoleIcon(user.role)}
+                      label={user.role?.toUpperCase() || 'USER'}
+                      color={getRoleColor(user.role)}
+                      size="small"
+                      variant="outlined"
+                    />
+                  </div>
+                  
+                  <div className="flex items-center gap-2 ml-2">
+                    <CalendarToday fontSize="small" className="text-gray-400" />
+                    <Typography variant="body2" className="text-gray-700">
+                      {formatDate(user.createdAt)}
+                    </Typography>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="hidden md:block">
+            <TableContainer component={Paper} variant="outlined">
+              <Table>
+                <TableHead>
+                  <TableRow>
+                    <TableCell>User</TableCell>
+                    <TableCell>Email</TableCell>
+                    <TableCell>Role</TableCell>
+                    <TableCell>Joined</TableCell>
+                    <TableCell align="center">Actions</TableCell>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
+                </TableHead>
+                <TableBody>
+                  {users.map((user) => (
+                    <TableRow 
+                      key={user.uid}
+                      className={user.uid === currentUser?.uid ? 'bg-blue-50' : ''}
+                    >
+                      <TableCell>
+                        <div className="flex items-center gap-3">
+                          <Avatar className="w-8 h-8">
+                            {user.displayName 
+                              ? user.displayName.charAt(0).toUpperCase()
+                              : user.email?.charAt(0).toUpperCase() || 'U'
+                            }
+                          </Avatar>
+                          <div>
+                            <Typography variant="caption" className="text-gray-500">
+                              ID: {user.uid.slice(-8)}...
+                            </Typography>
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <Email fontSize="small" className="text-gray-400" />
+                          <Typography variant="body2">
+                            {user.email || 'No email'}
+                          </Typography>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Chip
+                          icon={getRoleIcon(user.role)}
+                          label={user.role?.toUpperCase() || 'USER'}
+                          color={getRoleColor(user.role)}
+                          size="small"
+                          variant="outlined"
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <CalendarToday fontSize="small" className="text-gray-400" />
+                          <Typography variant="body2">
+                            {formatDate(user.createdAt)}
+                          </Typography>
+                        </div>
+                      </TableCell>
+                      <TableCell align="center">
+                        <Tooltip title="View Details">
+                          <IconButton 
+                            size="small"
+                            onClick={() => handleViewDetails(user)}
+                          >
+                            <Info />
+                          </IconButton>
+                        </Tooltip>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          </div>
         </CardContent>
       </Card>
 
@@ -182,43 +240,45 @@ const UserList = ({ users, currentUser }) => {
         fullWidth
       >
         <DialogTitle>
-          <Stack direction="row" spacing={2} alignItems="center">
-            <Avatar>
+          <div className="flex items-center gap-3">
+            <Avatar className="w-10 h-10">
               {selectedUser?.displayName 
                 ? selectedUser.displayName.charAt(0).toUpperCase()
                 : selectedUser?.email?.charAt(0).toUpperCase() || 'U'
               }
             </Avatar>
-            <Box>
-              
-              <Typography variant="caption" color="textSecondary">
+            <div>
+              <Typography variant="h6">
+                {selectedUser?.displayName || 'User Details'}
+              </Typography>
+              <Typography variant="caption" className="text-gray-500">
                 User Details
               </Typography>
-            </Box>
-          </Stack>
+            </div>
+          </div>
         </DialogTitle>
         <DialogContent>
-          <Stack spacing={2} mt={1}>
-            <Box>
-              <Typography variant="subtitle2" color="textSecondary">
+          <div className="space-y-4 mt-2">
+            <div>
+              <Typography variant="subtitle2" className="text-gray-500">
                 User ID
               </Typography>
-              <Typography variant="body1">
+              <Typography variant="body1" className="break-all">
                 {selectedUser?.uid}
               </Typography>
-            </Box>
+            </div>
             
-            <Box>
-              <Typography variant="subtitle2" color="textSecondary">
+            <div>
+              <Typography variant="subtitle2" className="text-gray-500">
                 Email
               </Typography>
               <Typography variant="body1">
                 {selectedUser?.email || 'No email provided'}
               </Typography>
-            </Box>
+            </div>
             
-            <Box>
-              <Typography variant="subtitle2" color="textSecondary">
+            <div>
+              <Typography variant="subtitle2" className="text-gray-500">
                 Role
               </Typography>
               <Chip
@@ -228,28 +288,28 @@ const UserList = ({ users, currentUser }) => {
                 size="small"
                 variant="outlined"
               />
-            </Box>
+            </div>
             
-            <Box>
-              <Typography variant="subtitle2" color="textSecondary">
+            <div>
+              <Typography variant="subtitle2" className="text-gray-500">
                 Account Created
               </Typography>
               <Typography variant="body1">
                 {formatDate(selectedUser?.createdAt)}
               </Typography>
-            </Box>
+            </div>
             
             {selectedUser?.lastLogin && (
-              <Box>
-                <Typography variant="subtitle2" color="textSecondary">
+              <div>
+                <Typography variant="subtitle2" className="text-gray-500">
                   Last Login
                 </Typography>
                 <Typography variant="body1">
                   {formatDate(selectedUser.lastLogin)}
                 </Typography>
-              </Box>
+              </div>
             )}
-          </Stack>
+          </div>
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCloseDetails}>
@@ -257,7 +317,7 @@ const UserList = ({ users, currentUser }) => {
           </Button>
         </DialogActions>
       </Dialog>
-    </Box>
+    </div>
   );
 };
 

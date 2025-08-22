@@ -5,6 +5,7 @@ import { Provider } from 'react-redux';
 import { store } from "../store";
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
+import { Toaster } from 'react-hot-toast';
 
 export default function RootLayout({ children }) {
   return (
@@ -15,6 +16,7 @@ export default function RootLayout({ children }) {
             <main >
               {children}
             </main>
+            <Toaster />
           </LocalizationProvider>
         </Provider>
       </body>

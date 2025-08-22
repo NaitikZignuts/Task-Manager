@@ -41,10 +41,12 @@ const ConfirmationDialog = ({ open, onClose, onConfirm, title, message }) => {
       <DialogActions className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center px-4 pb-4 pt-2">
         <Button
           onClick={onClose}
-          className="w-full sm:w-auto border border-gray-300 text-gray-700 hover:bg-gray-100 rounded-xl"
+          variant="outlined"
+          className="w-full sm:w-auto text-gray-700 hover:bg-gray-200 rounded-xl border-gray-300"
         >
           Cancel
         </Button>
+
         <Button
           onClick={onConfirm}
           color="error"
