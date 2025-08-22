@@ -36,13 +36,15 @@ const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
 
 const UserDashboard = () => {
   const dispatch = useDispatch();
-  const { tasks, status, error } = useSelector((state) => state.tasks);
+  const { tasks, totalCount, totalPages, currentPage: reduxCurrentPage, status, error } = useSelector((state) => state.tasks);
   const { user } = useSelector((state) => state.auth);
   const [users, setUsers] = useState([]);
   const [analytics, setAnalytics] = useState({});
   const [fetchError, setFetchError] = useState('');
   const [currentTab, setCurrentTab] = useState(0);
   const [chartType, setChartType] = useState('bar');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize] = useState(10);
 
   const { control, watch } = useForm({
     defaultValues: {
@@ -56,96 +58,52 @@ const UserDashboard = () => {
   const statusFilter = watch('statusFilter');
   const dateFilter = watch('dateFilter');
 
-  const getFilteredTasks = () => {
+  const getTabFilteredTasks = () => {
     if (!tasks) return [];
-
-    let filtered = tasks;
-
-    if (searchTerm) {
-      const term = searchTerm.toLowerCase();
-      filtered = filtered.filter(task =>
-        task.title.toLowerCase().includes(term) ||
-        task.description.toLowerCase().includes(term)
-      );
-    }
-
-    if (statusFilter && statusFilter !== 'all') {
-      filtered = filtered.filter(task => task.status === statusFilter);
-    }
-
-    if (dateFilter !== 'all') {
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-
-      switch (dateFilter) {
-        case 'today':
-          filtered = filtered.filter(task => {
-            const dueDate = new Date(task.dueDate);
-            dueDate.setHours(0, 0, 0, 0);
-            return dueDate.getTime() === today.getTime();
-          });
-          break;
-        case 'week':
-          const weekEnd = new Date(today);
-          weekEnd.setDate(today.getDate() + 7);
-          filtered = filtered.filter(task => {
-            const dueDate = new Date(task.dueDate);
-            return dueDate >= today && dueDate <= weekEnd;
-          });
-          break;
-        case 'month':
-          const monthEnd = new Date(today);
-          monthEnd.setMonth(today.getMonth() + 1);
-          filtered = filtered.filter(task => {
-            const dueDate = new Date(task.dueDate);
-            return dueDate >= today && dueDate <= monthEnd;
-          });
-          break;
-        case 'overdue':
-          filtered = filtered.filter(task => {
-            const dueDate = new Date(task.dueDate);
-            return dueDate < today;
-          });
-          break;
-        default:
-          break;
-      }
-    }
 
     switch (currentTab) {
       case 0:
         if (user?.role === 'admin') {
-          return filtered;
+          return tasks;
         } else {
-          return filtered.filter(task => task.ownerId === user?.uid);
+          return tasks.filter(task => task.ownerId === user?.uid);
         }
       case 1:
-        return filtered.filter(task => task.assignedTo === user?.uid);
+        return tasks.filter(task => task.assignedTo === user?.uid);
       case 2:
         if (user?.role === 'admin') {
           return [];
         } else {
-          return filtered.filter(task => task.ownerId === user?.uid);
+          return tasks.filter(task => task.ownerId === user?.uid);
         }
       default:
-        return filtered;
+        return tasks;
+    }
+  };
+
+  const fetchAllTasks = async () => {
+    try {
+      const params = {
+        searchTerm,
+        statusFilter,
+        dateFilter,
+        page: currentPage,
+        pageSize
+      };
+
+      if (user.role === 'admin') {
+        await dispatch(fetchTasks(params)).unwrap();
+      } else {
+        await dispatch(fetchTasks({ ...params, userId: user.uid })).unwrap();
+      }
+    } catch (err) {
+      console.error('Failed to fetch tasks:', err);
+      setFetchError('Failed to load tasks. Please check your permissions.');
     }
   };
 
   useEffect(() => {
     if (user?.uid) {
-      const fetchAllTasks = async () => {
-        try {
-          if (user.role === 'admin') {
-            await dispatch(fetchTasks()).unwrap();
-          } else {
-            await dispatch(fetchTasks(user.uid)).unwrap();
-          }
-        } catch (err) {
-          console.error('Failed to fetch tasks:', err);
-          setFetchError('Failed to load tasks. Please check your permissions.');
-        }
-      };
       fetchAllTasks();
 
       getUsers()
@@ -161,17 +119,18 @@ const UserDashboard = () => {
           setFetchError('Failed to load users. Please check your permissions.');
         });
     }
-  }, [dispatch, user]);
+  }, [dispatch, user, searchTerm, statusFilter, dateFilter, currentPage]);
 
   useEffect(() => {
-    if (tasks.length > 0) {
+    const allUserTasks = user?.role === 'admin' ? tasks : tasks;
+    if (allUserTasks.length > 0) {
       const analyticsData = {
-        total: tasks.length,
-        todo: tasks.filter(task => task.status === 'todo').length,
-        inProgress: tasks.filter(task => task.status === 'in-progress').length,
-        done: tasks.filter(task => task.status === 'done').length,
-        assignedToMe: tasks.filter(task => task.assignedTo === user?.uid).length,
-        createdByMe: tasks.filter(task => task.ownerId === user?.uid).length,
+        total: allUserTasks.length,
+        todo: allUserTasks.filter(task => task.status === 'todo').length,
+        inProgress: allUserTasks.filter(task => task.status === 'in-progress').length,
+        done: allUserTasks.filter(task => task.status === 'done').length,
+        assignedToMe: allUserTasks.filter(task => task.assignedTo === user?.uid).length,
+        createdByMe: allUserTasks.filter(task => task.ownerId === user?.uid).length,
       };
       setAnalytics(analyticsData);
     } else {
@@ -189,11 +148,7 @@ const UserDashboard = () => {
   const handleTaskCreated = async (taskData) => {
     try {
       await dispatch(createTask(taskData)).unwrap();
-      if (user.role === 'admin') {
-        dispatch(fetchTasks());
-      } else {
-        dispatch(fetchTasks(user.uid));
-      }
+      fetchAllTasks();
     } catch (err) {
       console.error('Failed to create task:', err);
       setFetchError('Failed to create task. Please check your permissions.');
@@ -203,11 +158,7 @@ const UserDashboard = () => {
   const handleTaskUpdated = async (taskId, taskData) => {
     try {
       await dispatch(editTask({ id: taskId, taskData })).unwrap();
-      if (user.role === 'admin') {
-        dispatch(fetchTasks());
-      } else {
-        dispatch(fetchTasks(user.uid));
-      }
+      fetchAllTasks();
     } catch (err) {
       console.error('Failed to update task:', err);
       setFetchError('Failed to update task. Please check your permissions.');
@@ -217,11 +168,7 @@ const UserDashboard = () => {
   const handleTaskDeleted = async (taskId) => {
     try {
       await dispatch(removeTask(taskId)).unwrap();
-      if (user.role === 'admin') {
-        dispatch(fetchTasks());
-      } else {
-        dispatch(fetchTasks(user.uid));
-      }
+      fetchAllTasks();
     } catch (err) {
       console.error('Failed to delete task:', err);
       setFetchError('Failed to delete task. Please check your permissions.');
@@ -236,7 +183,7 @@ const UserDashboard = () => {
     setCurrentTab(newValue);
   };
 
-  const filteredTasks = getFilteredTasks();
+  const filteredTasks = getTabFilteredTasks();
   const getTabLabels = () => {
     if (user?.role === 'admin') {
       return [
@@ -527,6 +474,9 @@ const UserDashboard = () => {
             onTaskDeleted={handleTaskDeleted}
             currentUser={user}
             currentTab={currentTab}
+            totalPages={totalPages}
+            currentPage={currentPage}
+            onPageChange={(event, newPage) => setCurrentPage(newPage)}
           />
         )}
       </DashboardLayout>

@@ -219,15 +219,6 @@ const UserList = ({ users, currentUser }) => {
             
             <Box>
               <Typography variant="subtitle2" color="textSecondary">
-                Display Name
-              </Typography>
-              <Typography variant="body1">
-                {selectedUser?.displayName || 'No display name'}
-              </Typography>
-            </Box>
-            
-            <Box>
-              <Typography variant="subtitle2" color="textSecondary">
                 Role
               </Typography>
               <Chip

@@ -4,11 +4,21 @@ const API_BASE_URL = '/api';
 
 export const fetchTasks = createAsyncThunk(
   'tasks/fetchTasks',
-  async (userId = null, { rejectWithValue }) => {
+  async ({ userId = null, searchTerm = '', statusFilter = 'all', dateFilter = 'all', page = 1, pageSize = 10 }, { rejectWithValue }) => {
     try {
-      const url = userId ?
-        `${API_BASE_URL}/tasks?userId=${encodeURIComponent(userId)}` :
-        `${API_BASE_URL}/tasks`;
+      const params = new URLSearchParams({
+        searchTerm,
+        statusFilter,
+        dateFilter,
+        page: page.toString(),
+        pageSize: pageSize.toString()
+      });
+      
+      if (userId) {
+        params.append('userId', userId);
+      }
+
+      const url = `${API_BASE_URL}/tasks?${params.toString()}`;
 
       const response = await fetch(url, {
         method: 'GET',
@@ -23,7 +33,7 @@ export const fetchTasks = createAsyncThunk(
       }
 
       const data = await response.json();
-      return data.tasks;
+      return data;
     } catch (error) {
       console.error('Error fetching tasks:', error);
       return rejectWithValue(error.message);
@@ -135,6 +145,10 @@ export const patchTask = createAsyncThunk(
 
 const initialState = {
   tasks: [],
+  totalCount: 0,
+  totalPages: 0,
+  currentPage: 1,
+  pageSize: 10,
   status: 'idle',
   error: null,
 };
@@ -160,7 +174,11 @@ const taskSlice = createSlice({
       })
       .addCase(fetchTasks.fulfilled, (state, action) => {
         state.status = 'succeeded';
-        state.tasks = action.payload;
+        state.tasks = action.payload.tasks;
+        state.totalCount = action.payload.totalCount;
+        state.totalPages = action.payload.totalPages;
+        state.currentPage = action.payload.currentPage;
+        state.pageSize = action.payload.pageSize;
       })
       .addCase(fetchTasks.rejected, (state, action) => {
         state.status = 'failed';

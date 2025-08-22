@@ -13,28 +13,13 @@ const statusColors = {
   done: 'success',
 };
 
-const TaskList = ({ tasks, users, onTaskCreated, onTaskUpdated, onTaskDeleted, currentUser }) => {
+const TaskList = ({ tasks, users, onTaskCreated, onTaskUpdated, onTaskDeleted, currentUser, totalPages, currentPage, onPageChange }) => {
   const [open, setOpen] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState(null);
   const [taskToDelete, setTaskToDelete] = useState(null);
   const [formError, setFormError] = useState('');
-  const [page, setPage] = useState(1);
-  const [rowsPerPage] = useState(10);
   const router = useRouter();
-
-  useEffect(() => {
-    setPage(1);
-  }, [tasks]);
-
-  const totalPages = Math.ceil(tasks.length / rowsPerPage);
-  const startIndex = (page - 1) * rowsPerPage;
-  const endIndex = startIndex + rowsPerPage;
-  const paginatedTasks = tasks.slice(startIndex, endIndex);
-
-  const handlePageChange = (event, newPage) => {
-    setPage(newPage);
-  };
 
   const canEditTask = (task) => {
     return currentUser?.role === 'admin' || task.ownerId === currentUser?.uid;
@@ -124,7 +109,7 @@ const TaskList = ({ tasks, users, onTaskCreated, onTaskUpdated, onTaskDeleted, c
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
         <div className="block sm:hidden bg-gray-50 px-4 py-3 border-b border-gray-200">
           <Typography variant="subtitle2" className="font-semibold text-gray-700">
-            Tasks ({tasks.length}) - Page {page} of {totalPages}
+          Tasks ({tasks.length}) - Page {currentPage} of {totalPages}
           </Typography>
         </div>
         <div className="hidden sm:grid sm:grid-cols-12 bg-gray-50 px-6 py-3 border-b border-gray-200 text-sm font-medium text-gray-700">
@@ -136,7 +121,7 @@ const TaskList = ({ tasks, users, onTaskCreated, onTaskUpdated, onTaskDeleted, c
         </div>
 
         <div className="divide-y divide-gray-100">
-          {paginatedTasks.map((task) => (
+          {tasks.map((task) => (
             <div
               key={task.id}
               className="hover:bg-gray-50 cursor-pointer transition-colors duration-150"
@@ -238,7 +223,7 @@ const TaskList = ({ tasks, users, onTaskCreated, onTaskUpdated, onTaskDeleted, c
           ))}
         </div>
 
-        {tasks.length === 0 && (
+        {tasks?.length === 0 && (
           <div className="px-6 py-12 text-center">
             <Typography variant="body1" className="text-gray-500">
               No tasks found. Create your first task to get started.
@@ -251,8 +236,8 @@ const TaskList = ({ tasks, users, onTaskCreated, onTaskUpdated, onTaskDeleted, c
         <Box className="flex justify-center mt-6">
           <Pagination
             count={totalPages}
-            page={page}
-            onChange={handlePageChange}
+            page={currentPage}
+            onChange={onPageChange}
             color="primary"
             showFirstButton
             showLastButton
