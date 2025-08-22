@@ -67,8 +67,8 @@ const UserDashboard = () => {
         if (user?.role === 'admin') {
           return tasks;
         } else {
-          return tasks.filter(task => 
-            task.assignedTo === user?.uid || 
+          return tasks.filter(task =>
+            task.assignedTo === user?.uid ||
             (task.ownerId === user?.uid && (!task.assignedTo || task.assignedTo === user?.uid))
           );
         }
@@ -123,6 +123,7 @@ const UserDashboard = () => {
           setFetchError('Failed to load users. Please check your permissions.');
         });
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dispatch, user, searchTerm, statusFilter, dateFilter, currentPage]);
 
   useEffect(() => {
@@ -147,25 +148,26 @@ const UserDashboard = () => {
         createdByMe: 0,
       });
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [allTasks, user?.uid]);
 
   const fetchAllTasksForAnalytics = async () => {
     try {
       const params = {
         searchTerm: '',
-        statusFilter: 'all', 
+        statusFilter: 'all',
         dateFilter: 'all',
         page: 1,
         pageSize: 1000
       };
-  
+
       let analyticsTasksResponse;
       if (user.role === 'admin') {
         analyticsTasksResponse = await dispatch(fetchTasks(params)).unwrap();
       } else {
         analyticsTasksResponse = await dispatch(fetchTasks({ ...params, userId: user.uid })).unwrap();
       }
-      
+
       setAllTasks(analyticsTasksResponse.tasks || []);
     } catch (err) {
       console.error('Failed to fetch tasks for analytics:', err);
@@ -176,6 +178,7 @@ const UserDashboard = () => {
     if (user?.uid) {
       fetchAllTasksForAnalytics();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dispatch, user?.uid]);
 
   const handleTaskCreated = async (taskData) => {

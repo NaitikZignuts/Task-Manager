@@ -44,7 +44,7 @@ const TaskForm = ({ task, onSubmit, users, error, onClose }) => {
     const selectedDate = new Date(date);
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    
+
     if (selectedDate < today) {
       return 'Due date must be in the future - past dates are not allowed';
     }
@@ -52,8 +52,8 @@ const TaskForm = ({ task, onSubmit, users, error, onClose }) => {
   };
 
   const handleFormSubmit = async (data) => {
-    if (isSubmitting) return; 
-    
+    if (isSubmitting) return;
+
     setIsSubmitting(true);
     const formattedData = {
       ...data,
@@ -62,7 +62,7 @@ const TaskForm = ({ task, onSubmit, users, error, onClose }) => {
       dueDate: data.dueDate instanceof Date ? data.dueDate.toISOString() : data.dueDate,
       createdAt: task?.createdAt || new Date().toISOString(),
     };
-    
+
     try {
       await onSubmit(formattedData);
     } finally {
@@ -180,10 +180,10 @@ const TaskForm = ({ task, onSubmit, users, error, onClose }) => {
           fullWidth
           disabled={isSubmitting}
         >
-          {isSubmitting 
-    ? (task ? 'Updating Task...' : 'Creating Task...') 
-    : (task ? 'Update Task' : 'Create Task')
-  }
+          {isSubmitting
+            ? (task ? 'Updating Task...' : 'Creating Task...')
+            : (task ? 'Update Task' : 'Create Task')
+          }
         </Button>
       </Stack>
     </Box>

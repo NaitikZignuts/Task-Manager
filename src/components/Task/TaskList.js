@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { Button, Chip, Typography, IconButton, Alert, Pagination, Box, CircularProgress } from '@mui/material';
+import { useState } from 'react';
+import { Button, Chip, Typography, IconButton, Alert, Pagination, Box } from '@mui/material';
 import { Edit } from '@mui/icons-material';
 import TaskForm from './TaskForm';
 import { Dialog, DialogTitle, DialogContent } from '@mui/material';
