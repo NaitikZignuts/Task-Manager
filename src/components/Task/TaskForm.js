@@ -6,7 +6,7 @@ import useAuth from '@/hooks/useAuth';
 import FormInput from '@/components/common/FormInput';
 import FormAutocomplete from '@/components/common/FormAutocomplete';
 import { statusOptions } from '../common/TaskOption';
-import { RequiredRules, TitleRules } from '../common/commonRules';
+import { DescriptionRules, RequiredRules, TitleRules } from '../common/commonRules';
 import CloseIcon from '@mui/icons-material/Close';
 
 const TaskForm = ({ task, onSubmit, users, error, onClose }) => {
@@ -24,6 +24,7 @@ const TaskForm = ({ task, onSubmit, users, error, onClose }) => {
 
   const dueDateValue = watch('dueDate');
   const [isFormReady, setIsFormReady] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     if (task) {
@@ -50,7 +51,10 @@ const TaskForm = ({ task, onSubmit, users, error, onClose }) => {
     return true;
   };
 
-  const handleFormSubmit = (data) => {
+  const handleFormSubmit = async (data) => {
+    if (isSubmitting) return; 
+    
+    setIsSubmitting(true);
     const formattedData = {
       ...data,
       ownerId: user.uid,
@@ -58,7 +62,12 @@ const TaskForm = ({ task, onSubmit, users, error, onClose }) => {
       dueDate: data.dueDate instanceof Date ? data.dueDate.toISOString() : data.dueDate,
       createdAt: task?.createdAt || new Date().toISOString(),
     };
-    onSubmit(formattedData);
+    
+    try {
+      await onSubmit(formattedData);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const assignableUsers = users ? users
@@ -107,7 +116,7 @@ const TaskForm = ({ task, onSubmit, users, error, onClose }) => {
           label="Description"
           control={control}
           errors={errors}
-          rules={RequiredRules}
+          rules={DescriptionRules}
           multiline={true}
           rows={4}
           fullWidth
@@ -169,8 +178,12 @@ const TaskForm = ({ task, onSubmit, users, error, onClose }) => {
           variant="contained"
           size="large"
           fullWidth
+          disabled={isSubmitting}
         >
-          {task ? 'Update Task' : 'Create Task'}
+          {isSubmitting 
+    ? (task ? 'Updating Task...' : 'Creating Task...') 
+    : (task ? 'Update Task' : 'Create Task')
+  }
         </Button>
       </Stack>
     </Box>

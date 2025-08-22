@@ -8,7 +8,7 @@ import {
 } from "@mui/material";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 
-const ConfirmationDialog = ({ open, onClose, onConfirm, title, message }) => {
+const ConfirmationDialog = ({ open, onClose, onConfirm, title, message, isLoading }) => {
   return (
     <Dialog
       open={open}
@@ -51,9 +51,10 @@ const ConfirmationDialog = ({ open, onClose, onConfirm, title, message }) => {
           onClick={onConfirm}
           color="error"
           variant="contained"
+          disabled={isLoading}
           className="w-full sm:w-auto rounded-xl shadow-md"
         >
-          Confirm
+          {isLoading ? 'Deleting...' : 'Confirm'}
         </Button>
       </DialogActions>
     </Dialog>

@@ -66,7 +66,10 @@ const UserDashboard = () => {
         if (user?.role === 'admin') {
           return tasks;
         } else {
-          return tasks.filter(task => task.ownerId === user?.uid);
+          return tasks.filter(task => 
+            task.assignedTo === user?.uid || 
+            (task.ownerId === user?.uid && (!task.assignedTo || task.assignedTo === user?.uid))
+          );
         }
       case 1:
         return tasks.filter(task => task.assignedTo === user?.uid);
@@ -477,6 +480,7 @@ const UserDashboard = () => {
             totalPages={totalPages}
             currentPage={currentPage}
             onPageChange={(event, newPage) => setCurrentPage(newPage)}
+            loading={status === 'loading'}
           />
         )}
       </DashboardLayout>

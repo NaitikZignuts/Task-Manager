@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Button, Chip, Typography, IconButton, Alert, Pagination, Box } from '@mui/material';
+import { Button, Chip, Typography, IconButton, Alert, Pagination, Box, CircularProgress } from '@mui/material';
 import { Edit } from '@mui/icons-material';
 import TaskForm from './TaskForm';
 import { Dialog, DialogTitle, DialogContent } from '@mui/material';
@@ -14,12 +14,14 @@ const statusColors = {
   done: 'success',
 };
 
-const TaskList = ({ tasks, users, onTaskCreated, onTaskUpdated, onTaskDeleted, currentUser, totalPages, currentPage, onPageChange }) => {
+const TaskList = ({ tasks, users, onTaskCreated, onTaskUpdated, onTaskDeleted, currentUser, totalPages, currentPage, onPageChange, loading }) => {
   const [open, setOpen] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState(null);
   const [taskToDelete, setTaskToDelete] = useState(null);
   const [formError, setFormError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [deletingTaskId, setDeletingTaskId] = useState(null);
   const router = useRouter();
 
   const canEditTask = (task) => {
@@ -54,8 +56,9 @@ const TaskList = ({ tasks, users, onTaskCreated, onTaskUpdated, onTaskDeleted, c
   };
 
   const handleDeleteConfirm = async () => {
-    if (taskToDelete) {
+    if (taskToDelete && !deletingTaskId) {
       try {
+        setDeletingTaskId(taskToDelete.id);
         await onTaskDeleted(taskToDelete.id);
         toast.success('Task deleted successfully!', {
           duration: 4000,
@@ -68,37 +71,44 @@ const TaskList = ({ tasks, users, onTaskCreated, onTaskUpdated, onTaskDeleted, c
         const errorMsg = 'Failed to delete task. Please check your permissions.';
         setFormError(errorMsg);
         toast.error(errorMsg);
+      } finally {
+        setDeletingTaskId(null);
       }
     }
   };
 
-  const handleSubmit = async (taskData, event) => {
-    if (event) {
-      event.preventDefault();
+ const handleSubmit = async (taskData, event) => {
+  if (event) {
+    event.preventDefault();
+  }
+  if (isLoading) return; 
+  
+  try {
+    setIsLoading(true);
+    if (selectedTask) {
+      await onTaskUpdated(selectedTask.id, taskData);
+      toast.success('Task updated successfully!', {
+        duration: 4000,
+        position: 'top-center',
+      });
+    } else {
+      await onTaskCreated(taskData);
+      toast.success('Task created successfully!', {
+        duration: 4000,
+        position: 'top-center',
+      });
     }
-    try {
-      if (selectedTask) {
-        await onTaskUpdated(selectedTask.id, taskData);
-        toast.success('Task updated successfully!', {
-          duration: 4000,
-          position: 'top-center',
-        });
-      } else {
-        await onTaskCreated(taskData);
-        toast.success('Task created successfully!', {
-          duration: 4000,
-          position: 'top-center',
-        });
-      }
-      setOpen(false);
-      setFormError('');
-    } catch (err) {
-      console.error('Failed to save task:', err);
-      const errorMsg = 'Failed to save task. Please check your permissions.';
-      setFormError(errorMsg);
-      toast.error(errorMsg);
-    }
-  };
+    setOpen(false);
+    setFormError('');
+  } catch (err) {
+    console.error('Failed to save task:', err);
+    const errorMsg = 'Failed to save task. Please check your permissions.';
+    setFormError(errorMsg);
+    toast.error(errorMsg);
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   const formatDate = (dateString) => {
     try {
@@ -292,6 +302,7 @@ const TaskList = ({ tasks, users, onTaskCreated, onTaskUpdated, onTaskDeleted, c
         onConfirm={handleDeleteConfirm}
         title="Confirm Delete"
         message="Are you sure you want to delete this task? This action cannot be undone."
+        isLoading={!!deletingTaskId}
       />
     </div>
   );
